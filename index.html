@@ -1,0 +1,340 @@
+<!DOCTYPE html>
+<html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Zonificación y despacho</title>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+<style>
+:root{--navy:#10273e;--blue:#216be2;--line:#dbe4ec;--muted:#60758a}*{box-sizing:border-box}body{margin:0;font:14px system-ui,sans-serif;background:#eff4f8;color:var(--navy)}button,input,select{font:inherit}button{cursor:pointer;border:1px solid var(--line);border-radius:7px;padding:9px 12px;background:white;color:var(--navy);font-weight:600}button:hover{background:#eaf2ff}button.primary{background:var(--blue);color:white;border-color:var(--blue)}button.danger{color:#c33434}button:disabled{opacity:.5;cursor:wait}input,select{padding:9px;border:1px solid #c4d2df;border-radius:6px;background:white;max-width:100%;min-width:0}label{display:grid;gap:6px;font-size:12px;color:var(--muted)}h1,h2,h3,p{margin:0}h1{font-size:19px}h2{font-size:17px}.hidden,[hidden]{display:none!important}.login{min-height:100vh;display:grid;place-items:center;background:linear-gradient(125deg,#10273e,#1d5688)}.login form{width:min(420px,92vw);padding:34px;background:white;border-radius:16px;display:grid;gap:20px}.login p{color:var(--muted);line-height:1.5}header{display:flex;justify-content:space-between;align-items:center;gap:14px;padding:16px 22px;background:var(--navy);color:white}header small{color:#a5c4df}header .actions{flex-wrap:wrap}nav{display:flex;gap:8px;padding:12px 20px;overflow:auto;background:white;border-bottom:1px solid var(--line)}nav button.active{background:#e8f1ff;color:#175abc;border-color:#86b5ff}.actions{display:flex;gap:8px;align-items:center}.filters{padding:14px 20px;display:flex;gap:9px;flex-wrap:wrap;align-items:flex-end}.filters>label{flex:1;min-width:140px}.filters select[multiple]{height:68px}.filters input{width:100%}.hint{font-size:12px;color:var(--muted);line-height:1.5}.metrics{display:grid;grid-template-columns:repeat(9,minmax(100px,1fr));gap:8px;padding:0 20px 12px}.metric{background:white;border:1px solid var(--line);border-radius:9px;padding:12px}.metric span{display:block;font-size:11px;color:var(--muted);min-height:30px}.metric strong{font-size:21px;letter-spacing:-.5px}.metric.sla{background:#e3f4ed;border-color:#b6dfcc}.workspace{display:grid;grid-template-columns:minmax(360px,40%) 1fr;gap:12px;padding:0 20px 18px}.card{background:white;border:1px solid var(--line);border-radius:10px;overflow:hidden}.bar{padding:12px;display:flex;justify-content:space-between;gap:8px;align-items:center;border-bottom:1px solid var(--line);flex-wrap:wrap}#map{height:600px;background:#f5f8fb}.map-note{padding:9px 12px;font-size:12px}.district-scroll{height:445px;overflow:auto}.assign{display:flex;gap:7px;padding:12px;flex-wrap:wrap;background:#f5f9ff}.assign select{width:100%}.assign input{width:80px}.scroll{overflow:auto}table{width:100%;border-collapse:collapse;white-space:nowrap;font-size:12px}th{background:#edf3f8;text-align:left;padding:10px;position:sticky;top:0;z-index:1}td{padding:9px 10px;border-bottom:1px solid #e7edf2}tr.selected{background:#e3eeff}tbody tr:hover{background:#f3f7fd}td.num{text-align:right;font-variant-numeric:tabular-nums}input[type=checkbox]{width:17px;height:17px;accent-color:var(--blue)}.section{margin:0 20px 20px}.section .scroll{max-height:460px}.pill{display:inline-block;padding:3px 7px;border-radius:5px;background:#eaf0f6;margin:2px}.module{padding:20px}.module .card{margin-top:14px}.empty{padding:28px;text-align:center;color:var(--muted)}dialog{border:1px solid #b8c9d8;border-radius:14px;padding:0;width:min(650px,94vw);max-height:90vh;color:var(--navy)}dialog::backdrop{background:#0a1f36a0}.dialog-body{padding:20px;display:grid;gap:15px}.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}.wide{grid-column:1/-1}dialog select[multiple]{height:95px}.footer{padding:14px 20px;display:flex;justify-content:flex-end;gap:8px;background:#f4f7fa}.badge{background:white;border:1px solid #2474c4;border-radius:50%;width:18px;height:18px;display:grid;place-items:center;font-size:11px;box-shadow:0 2px 8px #0003}.badge svg{width:12.5px;height:12.5px}.badge.box{border-color:#d78b24}.badge.cedis{border-color:#6d28d9}.district-label{background:transparent;border:0;box-shadow:none;font-size:10px;color:#10273e;font-weight:700;text-shadow:0 1px white,1px 0 white,-1px 0 white}.district-label:before{display:none}#status{position:fixed;bottom:18px;left:50%;transform:translateX(-50%);max-width:90vw;padding:13px 20px;border-radius:8px;background:#10273e;color:white;z-index:99999;box-shadow:0 4px 20px #0003}#status.error{background:#a92232}.warning{background:#fff3d9;color:#79520c;padding:12px;border-radius:7px;line-height:1.5}.legend{max-height:85px;overflow:auto;padding:8px 12px;border-top:1px solid var(--line);font-size:12px}.dot{display:inline-block;width:11px;height:11px;border-radius:3px;margin-right:4px}.busy{opacity:.75;pointer-events:none}.topnote{padding:0 20px 12px}.nowrap{white-space:nowrap}@media(max-width:1200px){.metrics{grid-template-columns:repeat(5,1fr)}.workspace{grid-template-columns:1fr 1fr}}@media(max-width:800px){header{align-items:flex-start}.workspace{grid-template-columns:1fr}.metrics{grid-template-columns:repeat(3,1fr)}#map{height:460px}.form-grid{grid-template-columns:1fr}.wide{grid-column:auto}.filters{padding:12px}.workspace{padding:0 12px 12px}.section{margin:0 12px 12px}}
+.map-expanded{position:fixed!important;inset:0!important;width:100vw!important;height:100vh!important;height:100dvh!important;margin:0!important;border-radius:0!important;z-index:99990!important}.maps-links{display:grid;gap:8px;margin-top:12px}.maps-links input{width:100%;font-size:11px}.maps-links a{display:inline-block;padding:9px;border:1px solid #c4d2df;border-radius:7px;background:white;color:#175abc;text-decoration:none;font-weight:600}</style></head><body>
+<div id="loginView" class="login"><form id="loginForm"><div><small>OPERACIONES · DISTRIBUCIÓN</small><h1 style="margin-top:12px">Zonificación y despacho</h1></div><p>Planifica coberturas, ubica tus puntos y revisa los indicadores de cada zona.</p><label>Correo electrónico<input id="user" type="email" required autocomplete="username"></label><label>Contraseña<input id="password" type="password" required autocomplete="current-password"></label><button class="primary">Ingresar</button><span id="loginError" role="alert"></span></form></div>
+<div id="app" hidden><header><div><h1>Zonificación y despacho</h1><small id="loadInfo">Sin indicadores cargados</small></div><div class="actions"><span id="who"></span><button id="migrationButton" hidden>Migrar datos de Google</button><input id="migrationFile" type="file" accept=".json" hidden><button id="backupButton" hidden>Respaldar datos</button><button id="refresh">Recargar</button><button id="exit">Salir</button></div></header>
+<nav id="nav"><button data-tab="mapa" class="active">Mapa e indicadores</button><button data-tab="zonas">Zonas</button><button data-tab="tipos">Tipos de zona</button><button data-tab="areas">Áreas de despacho</button><button data-tab="puntos">Puntos geolocalizados</button><button data-tab="envios">Tipos de envío</button><button data-tab="rutas">Rutas</button><button data-tab="programaciones">Programaciones</button><button data-tab="cargas">Carga de Excel</button></nav>
+<main id="mapView"><div class="filters"><label>Área de despacho<select id="fAreas" multiple aria-label="Áreas"></select></label><label>Zona<select id="fZonas" multiple aria-label="Zonas"></select></label><label>Tipo de zona<select id="fTipos" multiple></select></label><label>Tipo de envío<select id="fEnvios" multiple></select></label><label>Departamento<select id="fDeptos" multiple></select></label><label>Provincia<select id="fProvincias" multiple aria-label="Provincias"></select></label><label>Buscar distrito / provincia<input id="search" placeholder="Nombre o UBIGEO"></label><button id="clearFilters">Limpiar filtros</button><button id="exportZoning" class="primary" title="Exporta la zonificación guardada que coincide con los filtros">Exportar zonificación Excel</button></div>
+<p class="hint topnote">Abre una lista y escribe para buscar. Selección múltiple: marca o desmarca con un clic. Buscar no cambia lo seleccionado; sin selección se muestran todos. Los filtros se combinan entre sí.</p><div class="bar section" id="sackControls"><label>Guías por saco<input id="summaryCapacity" type="number" min="0.01" step="any" value="27"></label><label>Redondeo de sacos<select id="summaryRounding"><option value="cercano">Entero más cercano</option><option value="decimal">Decimal</option><option value="arriba">Hacia arriba</option></select></label><button id="saveSackDefaults">Guardar predeterminado</button><span class="hint">Sacos por llegada = (total de guías ÷ promedio de Count_llegadas) ÷ guías por saco.</span></div><div id="metrics" class="metrics"></div><div class="topnote hint" id="summaryNote"></div>
+<div class="workspace"><section class="card"><div class="bar"><b id="districtCount">Distritos</b><div class="actions"><button id="selectAll">Seleccionar visibles</button><button id="clearSelection">Limpiar</button></div></div><div class="district-scroll"><table><thead><tr><th></th><th>Distrito / provincia</th><th>Guías</th><th>Zonas / SLA</th></tr></thead><tbody id="districtRows"></tbody></table></div><div class="assign" id="assignment"><select id="assignZone" aria-label="Zona para asignar distritos"></select><span id="selectedCount">0 seleccionados</span><label>SLA reparto (días)<input id="assignReparto" type="number" min="0" max="3650" step="0.1" value="5"></label><label>SLA traslado (días)<input id="assignTraslado" type="number" min="0" max="3650" step="0.1" value="0"></label><label>SLA total (días)<input id="assignSla" type="number" value="5" readonly></label><button id="assign" class="primary">Asignar / actualizar SLA</button><button id="unassign" class="danger">Quitar de la zona</button></div></section>
+<section class="card"><div class="bar"><b>Mapa de cobertura</b><div class="actions"><label><select id="pointType"><option value="">Todos los puntos</option><option value="PDV">🏍️ PDV</option><option value="ENCOMIENDA">📦 Encomienda</option><option value="CEDIS">Cedis (almacén)</option></select></label><button id="fit">Enfocar</button><label><input id="labels" type="checkbox" checked> Nombres</label></div></div><div id="map"></div><div id="mapNote" class="map-note">Clic en un distrito para seleccionarlo. 🏍️ PDV · 📦 Punto de encomienda · Cedis (almacén).</div><div id="legend" class="legend"></div></section></div>
+<section class="card section"><div class="bar"><div><h2>Detalle operativo filtrado</h2><span class="hint" id="detailCount"></span></div><div class="actions"><label>Días necesarios<select id="daysMode"><option value="maximo">Mayor valor</option><option value="promedio">Promedio de registros</option></select></label><button id="download">Descargar CSV</button></div></div><div class="scroll"><table><thead id="detailHead"></thead><tbody id="detailRows"></tbody></table></div><div class="bar"><button id="prev">Anterior</button><span id="pageInfo"></span><button id="next">Siguiente</button></div></section></main>
+<main id="moduleView" class="module" hidden><div class="bar"><div><h2 id="moduleTitle"></h2><p id="moduleHint" class="hint"></p></div><button id="addEntity" class="primary">Crear registro</button></div><div id="moduleContent"></div></main>
+</div>
+<dialog id="entityDialog"><form id="entityForm"><div class="bar"><h2 id="entityTitle"></h2><button type="button" data-close="entityDialog">✕</button></div><div class="dialog-body"><div id="entityFields" class="form-grid"></div><div id="entityError" role="alert"></div></div><div class="footer"><button type="button" data-close="entityDialog">Cancelar</button><button class="primary" id="saveEntity">Guardar</button></div></form></dialog>
+<dialog id="importDialog"><div class="bar"><h2>Revisar carga</h2><button data-close="importDialog">✕</button></div><div class="dialog-body" id="importPreview"></div><div class="footer"><button data-close="importDialog">Cancelar</button><button id="confirmImport" class="primary">Actualizar indicadores</button></div></dialog>
+<div id="status" hidden role="status"></div>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script><script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
+<script src="assets/geojson.js"></script>
+<script src="assets/core.js"></script>
+<script src="config.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<script src="assets/supabase-adapter.js"></script>
+<script>
+'use strict';
+const $=id=>document.getElementById(id),esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+function pointIcon(tipo){return tipo==='CEDIS'?'<svg width="25" height="25" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Almacén"><path d="M3 13L16 4l13 9v15H3V13Z" fill="#ede9fe" stroke="#6d28d9" stroke-width="2"/><path d="M9 28V15h14v13M9 19h14M9 23h14" stroke="#6d28d9" stroke-width="2"/><path d="M13 10h6" stroke="#6d28d9" stroke-width="2"/></svg>':tipo==='PDV'?'🏍️':'📦';}
+function pointTypeName(tipo){return tipo==='CEDIS'?'Cedis':tipo==='PDV'?'PDV':'Punto de encomienda';}
+const names={tipos:'Tipos de zona',areas:'Áreas a cargo de despacho',envios:'Tipos de envío',zonas:'Zonas',puntos:'Puntos geolocalizados',cargas:'Carga de Excel'};
+const catalog=(window.GEOJSON_DISTRITOS?.features||[]).map(f=>({ubigeo:String(f.properties.UBIGEO),distrito:f.properties.DISTRITO,provincia:f.properties.PROVINCIA,departamento:f.properties.DEPARTAMENTO}));
+let state,auth,map,polygons,markers,view,tab='mapa',entityKind,entityId='',page=0,pendingImport,picking=false,toastTimer,mutating=false;
+const selected=new Set(),layers=new Map();
+const fmt=v=>v==null?'—':Number(v).toLocaleString('es-PE',{maximumFractionDigits:2}),pct=v=>v==null?'—':(v*100).toFixed(2)+'%';
+const values=id=>[...$(id).selectedOptions].map(o=>o.value);
+function say(message,error=false){clearTimeout(toastTimer);$('status').textContent=message;$('status').className=error?'error':'';$('status').hidden=false;toastTimer=setTimeout(()=>$('status').hidden=true,error?14000:5000);}
+function rpc(name,...args){return window.zdRpc(name,...args);}
+async function write(name,...args){if(mutating)throw Error('Hay un guardado en curso.');mutating=true;document.body.classList.add('busy');try{state=await rpc(name,auth.token,state.revision,...args);fillOptions();render();say('Cambios guardados');}finally{mutating=false;document.body.classList.remove('busy');}}
+function run(fn){return async e=>{try{await fn(e);}catch(err){say(err.message||String(err),true);}};}
+function optionList(items,current=[],blank=false){return(blank?'<option value="">Seleccionar…</option>':'')+items.map(x=>'<option value="'+esc(x.id)+'" '+(current.includes(x.id)?'selected':'')+'>'+esc(x.nombre)+'</option>').join('');}
+function setOpts(id,items,blank=false){const old=values(id);$(id).innerHTML=optionList(items,old,blank);}
+function nameOf(kind,id){return state[kind].find(x=>x.id===id)?.nombre||'—';}
+function fillProvincias(){const departamentos=values('fDeptos');const options=[...new Map(catalog.filter(c=>!departamentos.length||departamentos.includes(c.departamento)).map(c=>[provinceKey(c.departamento,c.provincia),{id:provinceKey(c.departamento,c.provincia),nombre:c.provincia+' · '+c.departamento}])).values()].sort((a,b)=>a.nombre.localeCompare(b.nombre,'es'));setOpts('fProvincias',options);}
+function fillOptions(){[['fAreas','areas'],['fZonas','zonas'],['fTipos','tipos'],['fEnvios','envios'],['assignZone','zonas']].forEach(([id,k])=>setOpts(id,state[k],id==='assignZone'));setOpts('fDeptos',[...new Set(catalog.map(c=>c.departamento))].sort().map(d=>({id:d,nombre:d})));fillProvincias();$('assignment').hidden=auth.rol!=='ADMINISTRADOR';$('migrationButton').hidden=auth.rol!=='ADMINISTRADOR';$('backupButton').hidden=auth.rol!=='ADMINISTRADOR';$('who').textContent=auth.usuario+' · '+auth.rol;$('loadInfo').textContent=state.carga?state.carga.archivo+' · '+new Date(state.carga.fecha).toLocaleString('es-PE',{timeZone:'America/Lima'})+' · '+state.carga.usuario:'Sin indicadores cargados';}
+function filters(){return {areas:values('fAreas'),zonas:values('fZonas'),tipos:values('fTipos'),envios:values('fEnvios'),departamentos:values('fDeptos'),provincias:values('fProvincias'),q:$('search').value,puntoTipos:$('pointType').value?[$('pointType').value]:[]};}
+function refreshView(focus=false){if(!state)return;view=visibleData(state,catalog,filters());page=0;renderMapData(focus);}
+function render(){refreshView();if(tab!=='mapa')renderModule();}
+function metric(label,value,cls=''){return '<div class="metric '+cls+'"><span>'+esc(label)+'</span><strong>'+value+'</strong></div>';}
+function renderMapData(focus){
+  const s=summarize(view.records,$('daysMode').value);
+  $('metrics').innerHTML=[['Guías totales','total'],['Pendientes','pendientes'],['Pendientes en PDV','pdv'],['Entregados','entregados'],['Devueltos','devueltos'],['Finalizados','finalizados']].map(([l,k])=>metric(l,fmt(s[k]))).join('')+metric('Cumplen SLA 5 días',fmt(s.sla))+metric('Cumplimiento SLA 5 días',pct(s.cumplimiento),'sla')+metric('Días necesarios',fmt(s.dias));
+  const noMatch=view.records.filter(r=>!r.ubigeo);
+  $('summaryNote').textContent='Cumplimiento SLA 5 días (Excel) = '+fmt(s.sla)+' ÷ ('+fmt(s.entregados)+' + '+fmt(s.pdv)+'). Días: '+($('daysMode').value==='maximo'?'mayor valor':'promedio simple de registros')+'. '+s.sinDias+' registros sin días. '+(noMatch.length?noMatch.length+' filas sin vínculo geográfico incluidas en el total general; no participan en zonas. ':'')+'Los estados se muestran como vienen del Excel; no se suman entre sí.';
+  $('districtCount').textContent=fmt(view.districts.length)+' distritos';$('selectedCount').textContent=selected.size+' seleccionados (incluye ocultos por filtros)';
+  const rowsById=new Map();state.indicadores.filter(r=>r.ubigeo).forEach(r=>rowsById.set(r.ubigeo,(rowsById.get(r.ubigeo)||0)+r.total));
+  $('districtRows').innerHTML=view.districts.map(c=>{
+    const z=state.zonas.filter(z=>z.distritos.some(d=>d.ubigeo===c.ubigeo));
+    return '<tr class="'+(selected.has(c.ubigeo)?'selected':'')+'"><td><input type="checkbox" data-district="'+c.ubigeo+'" '+(selected.has(c.ubigeo)?'checked':'')+' aria-label="Seleccionar '+esc(c.distrito)+'"></td><td><b>'+esc(c.distrito)+'</b><br><span class="hint">'+esc(c.provincia)+' · '+c.ubigeo+'</span></td><td class="num">'+fmt(rowsById.get(c.ubigeo))+'</td><td>'+z.map(x=>'<span class="pill">'+esc(x.nombre)+' · '+slaLabel(x.distritos.find(d=>d.ubigeo===c.ubigeo))+'</span>').join('')+'</td></tr>';
+  }).join('');renderDetails();updateMap();if(focus)fitMap();
+}
+const cols=[['Departamento','departamento'],['Provincia','provincia'],['Distrito','distrito'],['UBIGEO','ubigeo'],['Guías totales','total'],['Llegadas','llegadas'],['Llegadas totales','llegadasTotales'],['Pendientes','pendientes'],['Pendientes en PDV','pdv'],['Entregados','entregados'],['Devueltos','devueltos'],['Finalizados','finalizados'],['Cumplen SLA 5 días','sla'],['SLA %','cumplimiento'],['Días necesarios','dias']];
+function renderDetails(){const max=Math.max(1,Math.ceil(view.records.length/60));page=Math.min(page,max-1);$('detailCount').textContent=fmt(view.records.length)+' registros únicos';$('detailHead').innerHTML='<tr>'+cols.map(c=>'<th>'+c[0]+'</th>').join('')+'</tr>';$('detailRows').innerHTML=view.records.slice(page*60,(page+1)*60).map(r=>'<tr>'+cols.map(([l,k],i)=>'<td class="'+(i>=4?'num':'')+'">'+(k==='cumplimiento'?pct(summarize([r]).cumplimiento):i>=4?fmt(r[k]):esc(r[k]||'Sin vínculo'))+'</td>').join('')+'</tr>').join('');$('pageInfo').textContent=(page+1)+' / '+max;$('prev').disabled=page===0;$('next').disabled=page>=max-1;}
+function initMap(){if(map)return;if(!window.L||!catalog.length)throw Error('No se pudo cargar Leaflet o GeoJSON. Revisa conexión y archivos.');map=L.map('map',{preferCanvas:true,minZoom:4,maxZoom:18}).setView([-9.2,-75],5);addMaximize(map);const clean=L.layerGroup().addTo(map),streets=L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{attribution:'© OpenStreetMap contributors',maxZoom:19});L.control.layers({'Mapa limpio':clean,'Calles y lugares':streets},null,{position:'bottomright'}).addTo(map);markers=L.layerGroup().addTo(map);polygons=L.geoJSON(GEOJSON_DISTRITOS,{onEachFeature:(f,l)=>{const id=String(f.properties.UBIGEO);layers.set(id,l);l.on('click',e=>{if(picking){pickPoint(e.latlng,id);return;}selected.has(id)?selected.delete(id):selected.add(id);renderMapData(false);});}}).addTo(map);map.on('click',e=>{if(picking)pickPoint(e.latlng,'');});map.on('zoomend',()=>updateLabels());new ResizeObserver(()=>map.invalidateSize()).observe($('map'));}
+function updateMap(){if(!map||!view)return;const visible=new Set(view.districts.map(c=>c.ubigeo));layers.forEach((l,id)=>{const zones=view.zones.filter(z=>z.distritos.some(d=>d.ubigeo===id)),show=visible.has(id),sel=selected.has(id);l.setStyle({color:sel?'#093c94':show?'#7992a6':'#bdcad4',weight:sel?2.5:.7,fillColor:sel?'#5e9df2':zones[0]?.color||'#f7fafc',fillOpacity:show?(sel?.28:zones.length?.18:.12):.03});l.unbindTooltip();const p=l.feature.properties;l.bindTooltip(esc(p.DISTRITO)+'<br>'+esc(p.PROVINCIA)+'<br>'+zones.map(z=>esc(z.nombre)+' · '+slaLabel(z.distritos.find(d=>d.ubigeo===id))).join(' · '),{sticky:true});});markers.clearLayers();view.points.forEach(p=>{const ico=L.divIcon({className:'',html:'<div class="badge '+(p.tipo==='CEDIS'?'cedis':p.tipo==='PDV'?'':'box')+'">'+pointIcon(p.tipo)+'</div>',iconSize:[18,18],iconAnchor:[9,9]});L.marker([p.lat,p.lon],{icon:ico}).addTo(markers).bindPopup('<b>'+esc(p.nombre)+'</b><br>'+esc(pointTypeName(p.tipo))+'<br>'+esc(nameOf('areas',p.area))+'<br>'+esc(p.direccion)+'<br>'+esc(p.telefono)+'<br>'+esc(p.zonas.map(id=>nameOf('zonas',id)).join(', '))+'<br>'+pointMapsLink(p));});$('legend').innerHTML=view.zones.map(z=>'<span class="pill"><i class="dot" style="background:'+z.color+'"></i>'+esc(z.nombre)+'</span>').join('')+'<span class="hint"> Distritos compartidos: color de la primera zona; consulta todas sus coberturas en la tabla.</span>';updateLabels();}
+let labelLayer;
+function updateLabels(){if(!map||!view)return;if(!labelLayer)labelLayer=L.layerGroup().addTo(map);labelLayer.clearLayers();if(!$('labels').checked||map.getZoom()<8)return;const ids=new Set(view.districts.map(c=>c.ubigeo));layers.forEach((l,id)=>{if(ids.has(id)&&map.getBounds().intersects(l.getBounds()))L.tooltip({permanent:true,direction:'center',className:'district-label'}).setLatLng(l.getBounds().getCenter()).setContent(esc(l.feature.properties.DISTRITO)).addTo(labelLayer);});}
+function fitMap(){if(!map)return;const bounds=L.latLngBounds([]);view.districts.forEach(c=>{const l=layers.get(c.ubigeo);if(l)bounds.extend(l.getBounds());});view.points.forEach(p=>bounds.extend([p.lat,p.lon]));if(bounds.isValid())map.fitBounds(bounds,{padding:[18,18],maxZoom:13});}
+function showTab(next){tab=next;$('mapView').hidden=tab!=='mapa';$('moduleView').hidden=tab==='mapa';document.querySelectorAll('#nav button').forEach(b=>b.classList.toggle('active',b.dataset.tab===tab));if(tab==='mapa'){setTimeout(()=>{map?.invalidateSize();},0);renderMapData(false);}else renderModule();}
+function renderModule(){const admin=auth.rol==='ADMINISTRADOR';$('moduleTitle').textContent=names[tab];$('addEntity').hidden=tab==='cargas'||!admin;$('moduleHint').textContent=tab==='zonas'?'Crea la zona y luego selecciona sus distritos desde el mapa. Puedes asignar un distrito a varias zonas.':tab==='puntos'?'Ubica puntos con coordenadas o seleccionando su posición en el mapa.':'Catálogo compartido de este proyecto.';
+  if(tab==='cargas'){renderLoads();return;}
+  const data=state[tab];let heads=['Nombre'];if(tab==='zonas')heads.push('Tipo','Área','Envío','Distritos');if(tab==='puntos')heads.push('Tipo','Área','Coordenadas','Zonas','Google Maps');if(admin)heads.push('Acciones');
+  $('moduleContent').innerHTML='<div class="card scroll"><table><thead><tr>'+heads.map(h=>'<th>'+h+'</th>').join('')+'</tr></thead><tbody>'+data.map(x=>{
+    let fields=[esc(x.nombre)];if(tab==='zonas')fields.push(esc(nameOf('tipos',x.tipo)),esc(nameOf('areas',x.area)),esc(nameOf('envios',x.envio)),x.distritos.length);if(tab==='puntos')fields.push(pointIcon(x.tipo)+' '+esc(pointTypeName(x.tipo)),esc(nameOf('areas',x.area)),x.lat+', '+x.lon,esc(x.zonas.map(id=>nameOf('zonas',id)).join(', ')),pointMapsLink(x));
+    if(admin)fields.push('<button data-edit="'+x.id+'">Editar</button> <button class="danger" data-delete="'+x.id+'">Eliminar</button>'+(tab==='zonas'?' <button data-zone-map="'+x.id+'">Ver / zonificar</button>':''));return '<tr>'+fields.map(f=>'<td>'+f+'</td>').join('')+'</tr>';
+  }).join('')+'</tbody></table>'+(!data.length?'<div class="empty">Aún no hay registros. '+(admin?'Crea el primero para comenzar.':'')+'</div>':'')+'</div>';
+}
+function field(label,id,value='',type='text',wide=false){return '<label class="'+(wide?'wide':'')+'">'+label+'<input id="e_'+id+'" name="'+id+'" type="'+type+'" value="'+esc(value)+'" '+(['direccion','telefono'].includes(id)?'':'required')+(type==='number'?' step="any"':'')+'></label>';}
+function selectField(label,id,items,value='',multi=false){return '<label>'+label+'<select id="e_'+id+'" name="'+id+'" '+(multi?'multiple':'required')+'>'+optionList(items,Array.isArray(value)?value:[value],!multi)+'</select></label>';}
+function openEntity(kind,id=''){entityKind=kind;entityId=id;const x=state[kind].find(v=>v.id===id)||{};$('entityTitle').textContent=(id?'Editar · ':'Crear · ')+names[kind];let html=field('Nombre','nombre',x.nombre||'','text',true);
+  if(kind==='zonas')html+=selectField('Tipo de zona','tipo',state.tipos,x.tipo)+selectField('Área a cargo','area',state.areas,x.area)+selectField('Tipo de envío','envio',state.envios,x.envio)+field('Color en el mapa','color',x.color||'#216be2','color');
+  if(kind==='puntos')html+=selectField('Tipo de punto','tipo',[{id:'PDV',nombre:'🏍️ PDV'},{id:'ENCOMIENDA',nombre:'📦 Punto de encomienda'},{id:'CEDIS',nombre:'Cedis (almacén)'}],x.tipo||'PDV')+selectField('Área a cargo','area',state.areas,x.area)+selectField('Zonas asociadas','zonas',state.zonas.filter(z=>z.area===x.area),x.zonas||[],true)+selectField('Distrito del punto','ubigeo',catalog.map(c=>({id:c.ubigeo,nombre:c.departamento+' / '+c.provincia+' / '+c.distrito})),x.ubigeo)+field('Latitud','lat',x.lat??'','number')+field('Longitud','lon',x.lon??'','number')+'<button type="button" id="pickPoint" class="wide">Seleccionar posición en el mapa</button>'+field('Dirección','direccion',x.direccion||'','text',true)+field('Teléfono','telefono',x.telefono||'');
+  $('entityFields').innerHTML=html;$('entityError').textContent='';if(kind==='puntos'){$('e_area').onchange=()=>{$('e_zonas').innerHTML=optionList(state.zonas.filter(z=>z.area===$('e_area').value));};$('pickPoint').onclick=()=>{picking=true;$('entityDialog').close();showTab('mapa');$('mapNote').innerHTML='Haz clic en la ubicación del punto. <button id="cancelPick">Cancelar selección</button>';$('cancelPick').onclick=()=>{picking=false;$('entityDialog').showModal();$('mapNote').textContent='Clic en un distrito para seleccionarlo.';};say('Haz clic en el mapa para colocar el punto');};}$('entityDialog').showModal();
+}
+function pickPoint(latlng,id){if(!picking)return;picking=false;$('e_lat').value=latlng.lat.toFixed(7);$('e_lon').value=latlng.lng.toFixed(7);if(id)$('e_ubigeo').value=id;$('mapNote').textContent='Clic en un distrito para seleccionarlo. 🏍️ PDV · 📦 Punto de encomienda · Cedis (almacén).';$('entityDialog').showModal();}
+function renderLoads(){const unmatched=state.indicadores.filter(r=>!r.ubigeo);$('moduleHint').textContent='La nueva carga reemplaza el conjunto completo de indicadores y conserva zonas, puntos y catálogos.';
+  $('moduleContent').innerHTML='<div class="card"><div class="bar"><div><b>'+esc(state.carga?.archivo||'Sin archivo cargado')+'</b><p class="hint">'+(state.carga?fmt(state.carga.filas)+' filas · '+esc(new Date(state.carga.fecha).toLocaleString('es-PE',{timeZone:'America/Lima'})):'Selecciona el Excel REV.ZONA con sus 13 columnas.')+'</p></div>'+(auth.rol==='ADMINISTRADOR'?'<label>Subir Excel (.xlsx)<input id="excelFile" type="file" accept=".xlsx"></label>':'')+'</div><div style="padding:16px" class="hint">SLA objetivo: 5 días. La columna «Cumplimiento SLA 5 DIAS» se trata como cantidad, no porcentaje. Los valores originales de Devueltos y Finalizados se conservan. Días vacíos se muestran como —.</div></div><div class="card"><div class="bar"><h2>Filas sin distrito en el mapa: '+unmatched.length+'</h2></div><div class="scroll"><table><thead><tr><th>Departamento / provincia / distrito</th><th>Guías</th><th>Vinculación</th></tr></thead><tbody>'+unmatched.map(r=>'<tr><td>'+esc(r.key)+'</td><td>'+fmt(r.total)+'</td><td>'+(auth.rol==='ADMINISTRADOR'?'<button data-match="'+esc(r.id)+'">Vincular distrito</button>':'Sin vínculo')+'</td></tr>').join('')+'</tbody></table></div><p class="hint" style="padding:14px">Estas filas siguen en el total general, pero no se asignan a una zona hasta vincularlas. No vincules «Devoluciones» a un distrito si representa un grupo operativo.</p></div>';
+  if($('excelFile'))$('excelFile').onchange=run(previewExcel);
+}
+async function previewExcel(e){const file=e.target.files[0];if(!file)return;if(file.size>15*1024*1024)throw Error('El archivo supera 15 MB.');if(!window.XLSX)throw Error('No se cargó el lector de Excel. Revisa tu conexión y recarga.');say('Leyendo y validando Excel…');const wb=XLSX.read(await file.arrayBuffer(),{type:'array'});let matrix;
+  for(const name of wb.SheetNames){const rows=XLSX.utils.sheet_to_json(wb.Sheets[name],{header:1,defval:null,raw:true});if(rows.length&&HEADERS.every(h=>rows[0].map(norm).includes(norm(h)))){matrix=rows;break;}}
+  if(!matrix)throw Error('No se encontró una hoja con las 13 columnas de REV.ZONA.');const result=parseExcelRows(matrix,catalog,Object.fromEntries(state.homologaciones.map(x=>[x.key,x.ubigeo])));pendingImport={matrix,nombre:file.name,revision:state.revision};const s=summarize(result.records);
+  $('importPreview').innerHTML='<b>'+esc(file.name)+'</b><p>'+fmt(result.records.length)+' filas · '+fmt(s.total)+' guías · SLA '+pct(s.cumplimiento)+'</p><div class="warning">Se reemplazarán los indicadores vigentes. Se conservará un respaldo de los anteriores. Las zonas y puntos permanecerán registrados.</div><p>'+result.unmatched.length+' filas sin coincidencia geográfica. '+result.filasAdicionalesDistrito+' filas adicionales comparten distrito; se suman sus cantidades sin duplicarlas por zona.</p>'+(result.unmatched.length?'<div class="scroll" style="max-height:200px">'+result.unmatched.map(r=>'<p>'+esc(r.key)+' · '+fmt(r.total)+' guías</p>').join('')+'</div>':'');$('importDialog').showModal();
+}
+$('loginForm').onsubmit=async e=>{e.preventDefault();$('loginError').textContent='';const b=e.submitter;b.disabled=true;try{auth=await rpc('login',$('user').value,$('password').value);state=await rpc('obtenerDatos',auth.token);$('password').value='';$('loginView').hidden=true;$('app').hidden=false;fillOptions();initMap();refreshView();}catch(err){$('loginError').textContent=err.message;say(err.message,true);}finally{b.disabled=false;}};
+$('exit').onclick=run(async()=>{await rpc('logout',auth.token);location.reload();});$('refresh').onclick=run(async()=>{state=await rpc('obtenerDatos',auth.token);fillOptions();render();say('Información actualizada');});
+$('nav').onclick=e=>{if(e.target.dataset.tab)showTab(e.target.dataset.tab);};
+['fAreas','fZonas','fTipos','fEnvios','fDeptos','fProvincias','pointType'].forEach(id=>$(id).onchange=()=>{if(id==='fDeptos')fillProvincias();refreshView(true);});let searchTimer;$('search').oninput=()=>{clearTimeout(searchTimer);searchTimer=setTimeout(()=>refreshView(true),200);};
+$('clearFilters').onclick=()=>{['fAreas','fZonas','fTipos','fEnvios','fDeptos','fProvincias'].forEach(id=>[...$(id).options].forEach(o=>o.selected=false));$('search').value='';$('pointType').value='';fillProvincias();refreshView(true);};
+$('districtRows').onchange=e=>{const id=e.target.dataset.district;if(!id)return;e.target.checked?selected.add(id):selected.delete(id);renderMapData(false);};
+$('selectAll').onclick=()=>{view.districts.forEach(c=>selected.add(c.ubigeo));renderMapData(false);};$('clearSelection').onclick=()=>{selected.clear();renderMapData(false);};
+$('assign').onclick=run(async()=>{await write('asignarDistritos',$('assignZone').value,[...selected],{slaReparto:$('assignReparto').value,slaTraslado:$('assignTraslado').value},false);});$('unassign').onclick=run(async()=>{await write('asignarDistritos',$('assignZone').value,[...selected],0,true);});
+$('fit').onclick=fitMap;$('labels').onchange=updateLabels;$('daysMode').onchange=()=>renderMapData(false);$('prev').onclick=()=>{page--;renderDetails();};$('next').onclick=()=>{page++;renderDetails();};
+$('addEntity').onclick=()=>openEntity(tab);document.querySelectorAll('[data-close]').forEach(b=>b.onclick=()=>$(b.dataset.close).close());
+$('entityForm').onsubmit=async e=>{e.preventDefault();$('entityError').textContent='';$('saveEntity').disabled=true;try{if(entityKind==='homologacion'){await write('homologar',entityId,$('e_ubigeo').value);}else{const input=Object.fromEntries(new FormData(e.target));input.id=entityId;if(entityKind==='puntos')input.zonas=values('e_zonas');await write('guardarEntidad',entityKind,input);}$('entityDialog').close();}catch(err){$('entityError').textContent=err.message;}finally{$('saveEntity').disabled=false;}};
+$('moduleContent').onclick=run(async e=>{const b=e.target;if(b.dataset.edit)openEntity(tab,b.dataset.edit);if(b.dataset.delete&&confirm('¿Eliminar este registro? Si está en uso, se impedirá su eliminación.'))await write('eliminarEntidad',tab,b.dataset.delete);if(b.dataset.zoneMap){const id=b.dataset.zoneMap;$('clearFilters').click();[...$('fZonas').options].forEach(o=>o.selected=o.value===id);$('assignZone').value=id;showTab('mapa');refreshView(true);}if(b.dataset.match){const row=state.indicadores.find(r=>r.id===b.dataset.match);entityKind='homologacion';entityId=row.key;$('entityTitle').textContent='Vincular · '+row.distrito;$('entityFields').innerHTML=selectField('Distrito correcto','ubigeo',catalog.map(c=>({id:c.ubigeo,nombre:c.departamento+' / '+c.provincia+' / '+c.distrito})));$('entityError').textContent='';$('entityDialog').showModal();}});
+$('confirmImport').onclick=run(async()=>{if(!pendingImport)return;if(state.revision!==pendingImport.revision)throw Error('La base cambió. Vuelve a seleccionar el archivo.');await write('importarExcel',pendingImport.matrix,pendingImport.nombre);pendingImport=null;$('importDialog').close();});
+$('download').onclick=()=>{const quote=v=>'"'+String(v??'').replace(/^[=+@-]/,"'$&").replace(/"/g,'""')+'"';const lines=[cols.map(c=>quote(c[0])).join(';'),...view.records.map(r=>cols.map(([l,k])=>quote(k==='cumplimiento'?pct(summarize([r]).cumplimiento):r[k])).join(';'))];const url=URL.createObjectURL(new Blob(['\ufeff'+lines.join('\r\n')],{type:'text/csv;charset=utf-8'})),a=document.createElement('a');a.href=url;a.download='Indicadores_filtrados.csv';a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);};
+
+// Maximizar dentro de la ventana de la aplicación; compatible con Apps Script.
+let expandedMap=null;
+function restoreExpandedMap(resize=true){
+  if(!expandedMap)return;const old=expandedMap;expandedMap=null;
+  old.element.classList.remove('map-expanded');document.body.style.overflow=old.overflow;
+  old.button.textContent='Maximizar';old.button.setAttribute('aria-expanded','false');
+  if(resize)setTimeout(()=>{try{old.instance.invalidateSize();}catch(e){}},0);
+}
+function addMaximize(instance){
+  const control=L.control({position:'topleft'});
+  control.onAdd=()=>{
+    const box=L.DomUtil.create('div','leaflet-bar'),button=document.createElement('button');
+    button.type='button';button.textContent='Maximizar';button.setAttribute('aria-expanded','false');box.appendChild(button);
+    L.DomEvent.disableClickPropagation(box);L.DomEvent.disableScrollPropagation(box);
+    button.onclick=e=>{e.preventDefault();if(expandedMap?.instance===instance){restoreExpandedMap();return;}
+      restoreExpandedMap();expandedMap={instance,element:instance.getContainer(),button,overflow:document.body.style.overflow};
+      expandedMap.element.classList.add('map-expanded');document.body.style.overflow='hidden';button.textContent='Restaurar';button.setAttribute('aria-expanded','true');
+      setTimeout(()=>instance.invalidateSize(),0);
+    };return box;
+  };
+  control.addTo(instance);instance.on('unload',()=>{if(expandedMap?.instance===instance)restoreExpandedMap(false);});
+}
+window.addEventListener('keydown',e=>{if(e.key==='Escape')restoreExpandedMap();});
+function pointMapsLink(point){try{return '<a href="'+esc(mapsPointUrl(point))+'" target="_blank" rel="noopener noreferrer">Abrir ubicación</a>';}catch(e){return 'Sin coordenadas';}}
+
+</script>
+<link rel="stylesheet" href="assets/routes.css"><script src="assets/routes.js"></script>
+<link rel="stylesheet" href="assets/programs.css"><script src="assets/programs.js"></script>
+<style>
+.search-select{position:relative;display:block;min-width:0;width:100%}
+.search-select select.search-native{position:absolute!important;width:1px!important;height:1px!important;min-width:0!important;padding:0!important;opacity:0!important;pointer-events:none;left:0;bottom:0}
+.search-select .search-trigger{display:flex;align-items:center;justify-content:space-between;gap:8px;width:100%;min-height:38px;text-align:left;font-weight:400;font-size:14px;padding:9px;border:1px solid #c4d2df;background:white;color:#10273e}
+.search-trigger span:first-child{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0}
+.search-trigger:focus-visible{outline:2px solid #216be2;outline-offset:2px}.search-trigger:disabled{background:#f1f5f9;cursor:default}
+.route-table .search-select{width:200px}
+.search-menu{position:fixed;z-index:100010;background:white;border:1px solid #b8c9d8;border-radius:8px;box-shadow:0 8px 28px #10273e33;padding:8px;display:flex;flex-direction:column;gap:6px;overflow:hidden;color:#10273e;font:13px system-ui,sans-serif}
+.search-menu input{width:100%;flex-shrink:0;padding:8px;font:inherit}
+.search-menu .search-options{overflow:auto;flex:1;min-height:0}
+.search-menu .search-option{padding:8px;border-radius:4px;white-space:normal;cursor:pointer;display:flex;align-items:flex-start;gap:8px;line-height:1.4}
+.search-menu .search-option[aria-selected=true]{background:#e8f1ff;color:#175abc}
+.search-menu .search-option.active{outline:2px solid #216be2;outline-offset:-2px}
+.search-menu .search-option:hover{background:#edf3f8}
+.search-menu .search-option[aria-disabled=true]{opacity:.5;cursor:default}
+.search-menu .search-count{font-size:11px;color:#60758a;margin:0;flex-shrink:0}
+.search-menu .search-empty{padding:12px;color:#60758a}
+</style>
+<script>
+// El select original conserva los valores, validaciones y eventos del proyecto.
+(function installSelectSearch(){
+  const controls=new Map();let opened=null,serial=0,queued=false;
+  const normalize=value=>String(value??'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().replace(/\s+/g,' ').trim();
+  function sync(c){
+    const chosen=[...c.select.selectedOptions].filter(o=>o.value!=='');
+    const caption=c.select.multiple?(chosen.length?chosen.map(o=>o.textContent).join(', '):'Seleccionar…'):(c.select.selectedOptions[0]?.textContent||'Seleccionar…');
+    if(c.text.textContent!==caption)c.text.textContent=caption;
+    c.button.title=caption;c.button.disabled=c.select.disabled;
+    c.button.setAttribute('aria-label',c.name+': '+caption);
+    if(c.select.disabled&&opened===c)close();
+  }
+  function close(focus=false){
+    if(!opened)return;const c=opened;opened=null;c.menu.remove();c.button.setAttribute('aria-expanded','false');
+    if(focus&&c.button.isConnected)c.button.focus();
+  }
+  function position(c){
+    if(!c.button.isConnected||!c.button.getClientRects().length){close();return;}
+    const r=c.button.getBoundingClientRect(),gap=6,pad=8,width=Math.min(Math.max(r.width,260),window.innerWidth-2*pad);
+    const below=window.innerHeight-r.bottom-gap-pad,above=r.top-gap-pad,up=below<220&&above>below;
+    const height=Math.min(320,Math.max(100,up?above:below));
+    c.menu.style.width=width+'px';c.menu.style.maxHeight=height+'px';
+    c.menu.style.left=Math.max(pad,Math.min(r.left,window.innerWidth-width-pad))+'px';
+    c.menu.style.top=(up?Math.max(pad,r.top-gap-Math.min(c.menu.scrollHeight,height)):r.bottom+gap)+'px';
+  }
+  function activate(c,index){
+    c.active=index;
+    [...c.list.children].forEach((node,i)=>node.classList.toggle('active',i===index));
+    if(index>=0){c.input.setAttribute('aria-activedescendant',c.list.children[index].id);c.list.children[index].scrollIntoView({block:'nearest'});}
+    else c.input.removeAttribute('aria-activedescendant');
+  }
+  function render(c){
+    const words=normalize(c.input.value).split(' ').filter(Boolean);
+    c.matches=[...c.select.options].filter(o=>words.every(w=>normalize(o.textContent).includes(w)));
+    c.list.replaceChildren();c.active=-1;c.input.removeAttribute('aria-activedescendant');
+    c.matches.forEach((option,index)=>{
+      const row=document.createElement('div');row.className='search-option';row.id=c.id+'-option-'+index;row.setAttribute('role','option');
+      const disabled=option.disabled||option.parentElement?.disabled;
+      row.setAttribute('aria-selected',String(option.selected));row.setAttribute('aria-disabled',String(!!disabled));
+      const mark=document.createElement('span');mark.setAttribute('aria-hidden','true');mark.textContent=c.select.multiple?(option.selected?'☑':'☐'):(option.selected?'✓':'');
+      const text=document.createElement('span');text.textContent=option.textContent;row.append(mark,text);
+      row.addEventListener('mousedown',e=>e.preventDefault());row.addEventListener('click',e=>{e.preventDefault();choose(c,index);});c.list.append(row);
+    });
+    c.empty.hidden=c.matches.length>0;
+    c.count.textContent=c.matches.length+' opciones'+(c.select.multiple?' · '+[...c.select.selectedOptions].length+' seleccionadas. Clic para marcar o quitar.':'');
+    position(c);
+  }
+  function choose(c,index){
+    const option=c.matches[index];if(!option||c.select.disabled||option.disabled||option.parentElement?.disabled)return;
+    if(c.select.multiple)option.selected=!option.selected;else c.select.value=option.value;
+    c.select.dispatchEvent(new Event('input',{bubbles:true}));c.select.dispatchEvent(new Event('change',{bubbles:true}));
+    sync(c);if(!c.select.multiple)close(true);else if(opened===c&&c.select.isConnected){render(c);c.input.focus();}
+  }
+  function open(c){
+    if(c.select.disabled)return;close();sync(c);opened=c;
+    c.input.value='';c.button.setAttribute('aria-expanded','true');
+    (c.select.closest('dialog[open]')||document.body).append(c.menu);render(c);c.input.focus();
+  }
+  function install(select){
+    if(controls.has(select))return;
+    const label=select.closest('label');const labelText=label?[...label.childNodes].filter(n=>n.nodeType===3).map(n=>n.textContent).join(' ').trim():'';
+    const name=select.getAttribute('aria-label')||labelText||select.name||'Lista';
+    const wrapper=document.createElement('span');wrapper.className='search-select';select.before(wrapper);wrapper.append(select);
+    select.classList.add('search-native');select.tabIndex=-1;select.setAttribute('aria-hidden','true');
+    const button=document.createElement('button');button.type='button';button.className='search-trigger';button.setAttribute('aria-haspopup','listbox');button.setAttribute('aria-expanded','false');
+    const text=document.createElement('span'),arrow=document.createElement('span');arrow.textContent='▾';arrow.setAttribute('aria-hidden','true');button.append(text,arrow);wrapper.append(button);
+    const id='search-list-'+(++serial),menu=document.createElement('div');menu.className='search-menu';
+    const input=document.createElement('input');input.type='search';input.placeholder='Escribe para buscar…';input.autocomplete='off';input.setAttribute('aria-label','Buscar en '+name);input.setAttribute('role','combobox');input.setAttribute('aria-autocomplete','list');input.setAttribute('aria-expanded','true');input.setAttribute('aria-controls',id);
+    const list=document.createElement('div');list.id=id;list.className='search-options';list.setAttribute('role','listbox');list.setAttribute('aria-label',name);if(select.multiple)list.setAttribute('aria-multiselectable','true');button.setAttribute('aria-controls',id);
+    const empty=document.createElement('div');empty.className='search-empty';empty.textContent='Sin coincidencias';
+    const count=document.createElement('p');count.className='search-count';count.setAttribute('aria-live','polite');menu.append(input,list,empty,count);
+    const c={select,name,button,text,menu,input,list,empty,count,id,matches:[],active:-1};controls.set(select,c);
+    button.addEventListener('click',e=>{e.preventDefault();opened===c?close():open(c);});
+    button.addEventListener('keydown',e=>{if(e.key==='ArrowDown'||e.key==='ArrowUp'){e.preventDefault();open(c);}else if(e.key.length===1&&!e.ctrlKey&&!e.metaKey&&e.key!==' '){e.preventDefault();open(c);input.value=e.key;render(c);}});
+    input.addEventListener('input',()=>render(c));input.addEventListener('search',()=>render(c));
+    input.addEventListener('keydown',e=>{
+      if(e.key==='ArrowDown'||e.key==='ArrowUp'){
+        e.preventDefault();const step=e.key==='ArrowDown'?1:-1;let i=c.active;
+        for(let n=0;n<c.matches.length;n++){i=(i+step+c.matches.length)%c.matches.length;const o=c.matches[i];if(!o.disabled&&!o.parentElement?.disabled){activate(c,i);break;}}
+      }else if(e.key==='Enter'){e.preventDefault();if(c.active>=0)choose(c,c.active);else if(c.matches.length===1)choose(c,0);}
+    });
+    menu.addEventListener('keydown',e=>{if(e.key==='Escape'){e.preventDefault();e.stopPropagation();close(true);}if(e.key==='Tab'){close(true);}});
+    select.addEventListener('change',()=>{sync(c);if(opened===c)render(c);});
+    select.addEventListener('invalid',e=>{e.preventDefault();if(!opened)open(c);});
+    select.addEventListener('focus',()=>button.focus());sync(c);
+  }
+  function refresh(){
+    queued=false;document.querySelectorAll('select').forEach(install);
+    for(const [select,c] of controls){if(!select.isConnected){if(opened===c)close();controls.delete(select);}else sync(c);}
+    if(opened)render(opened);
+  }
+  function schedule(){if(!queued){queued=true;queueMicrotask(refresh);}}
+  new MutationObserver(records=>{
+    if(records.some(r=>{
+      const t=r.target.nodeType===1?r.target:r.target.parentElement;
+      return t?.closest('select')||[...(r.addedNodes||[]),...(r.removedNodes||[])].some(n=>n.nodeType===1&&(n.matches('select,dialog')||n.querySelector('select')));
+    }))schedule();
+  }).observe(document.body,{subtree:true,childList:true,characterData:true,attributes:true,attributeFilter:['disabled','selected','label','open']});
+  document.addEventListener('click',e=>{if(opened&&!opened.menu.contains(e.target)&&!opened.button.contains(e.target))close();schedule();});
+  document.addEventListener('change',schedule);document.addEventListener('reset',()=>setTimeout(schedule,0));
+  document.addEventListener('focusin',e=>{if(opened&&!opened.menu.contains(e.target)&&!opened.button.contains(e.target))close();});
+  document.addEventListener('close',()=>{if(opened&&opened.menu.closest('dialog:not([open])'))close();},true);
+  window.addEventListener('resize',()=>{if(opened)position(opened);});
+  document.addEventListener('scroll',e=>{if(opened&&!opened.menu.contains(e.target))position(opened);},true);
+  refresh();
+})();
+</script>
+
+<script>
+function buildZoningExport(data, geography, currentFilters, daysMode){
+  const visible=visibleData(data,geography,currentFilters);
+  const districts=new Map(visible.districts.map(d=>[d.ubigeo,d]));
+  const lookup=(kind,id)=>data[kind].find(x=>x.id===id)?.nombre||'';
+  const geoHeader=['UBIGEO','Distrito','Provincia','Departamento'];
+  const geoValues=d=>[String(d.ubigeo),d.distrito,d.provincia,d.departamento];
+  const zoning=[['ID zona','Zona',...geoHeader,'SLA reparto (días)','SLA traslado (días)','SLA asignado (días)','Área a cargo de despacho','Tipo de zona','Tipo de despacho / envío','Color de zona','Puntos asociados a la zona','Cantidad de puntos asociados']];
+  const exportedDistricts=new Map(),exportedZones=new Set();
+  for(const zone of visible.zones){
+    const points=data.puntos.filter(p=>(p.zonas||[]).includes(zone.id));
+    for(const assignment of zone.distritos){
+      const district=districts.get(assignment.ubigeo);if(!district)continue;
+      zoning.push([zone.id,zone.nombre,...geoValues(district),assignment.slaReparto,assignment.slaTraslado,assignment.sla,lookup('areas',zone.area),lookup('tipos',zone.tipo),lookup('envios',zone.envio),zone.color||'',points.map(p=>p.nombre+' ('+pointTypeName(p.tipo)+')').join(' | '),points.length]);
+      exportedDistricts.set(district.ubigeo,district);exportedZones.add(zone.id);
+    }
+  }
+  const operational=[[...geoHeader,'Zonas exportadas','Con indicadores','Guías totales','Count_llegadas (promedio)','Guías por llegada','Pendientes','Pendientes llegados al PDV','Entregados','Devueltos','Finalizados','Cumplen SLA 5 días (guías)','Cumplimiento SLA 5 días','Días necesarios']];
+  for(const d of exportedDistricts.values()){
+    const rows=data.indicadores.filter(r=>r.ubigeo===d.ubigeo),s=summarize(rows,daysMode);
+    const zones=visible.zones.filter(z=>z.distritos.some(x=>x.ubigeo===d.ubigeo)).map(z=>z.nombre).join(' | ');
+    const metrics=rows.length?[s.total,s.llegadas,s.llegadas>0?s.total/s.llegadas:null,s.pendientes,s.pdv,s.entregados,s.devueltos,s.finalizados,s.sla,s.cumplimiento,s.dias]:Array(11).fill(null);
+    operational.push([...geoValues(d),zones,rows.length?'Sí':'No',...metrics]);
+  }
+  const points=[['ID punto','Punto','Tipo de punto','Área a cargo','Zonas exportadas asociadas',...geoHeader,'Latitud','Longitud','Dirección','Teléfono','Google Maps']];
+  for(const p of data.puntos){
+    const zones=(p.zonas||[]).filter(id=>exportedZones.has(id));
+    if(!zones.length||(currentFilters.puntoTipos?.length&&!currentFilters.puntoTipos.includes(p.tipo)))continue;
+    const d=geography.find(d=>d.ubigeo===p.ubigeo);
+    let url='';try{url=mapsPointUrl(p);}catch(e){}
+    points.push([p.id,p.nombre,pointTypeName(p.tipo),lookup('areas',p.area),zones.map(id=>lookup('zonas',id)).join(' | '),...(d?geoValues(d):[p.ubigeo||'','','','']),p.lat,p.lon,p.direccion||'',String(p.telefono||''),url]);
+  }
+  const info=[['Concepto','Valor'],['Fecha de exportación (Perú)',new Date().toLocaleString('es-PE',{timeZone:'America/Lima'})],['Archivo de indicadores',data.carga?.archivo||'Sin indicadores cargados'],['Fecha de carga',data.carga?.fecha||''],['Revisión de datos',String(data.revision??'')],['Asignaciones zona-distrito',zoning.length-1],['Distritos únicos',exportedDistricts.size],['Zonas exportadas',exportedZones.size],['Alcance','Zonificación guardada que coincide con los filtros. Sin filtros se exportan todas las asignaciones. No incluye distritos sin zona ni cambios sin guardar.'],['Área','Área a cargo de despacho; no representa superficie geográfica.'],['Tipo de despacho / envío','Nombre registrado en el catálogo Tipos de envío.'],['SLA','SLA total = SLA reparto + SLA traslado, en días, por distrito y zona. Los SLA antiguos se importan como reparto = SLA anterior y traslado = 0.'],['Indicadores','Una fila por distrito. No se distribuyen ni duplican entre zonas compartidas. Sin datos se deja vacío.'],['Cumplimiento SLA','Guías que cumplen SLA 5 días / (entregados + pendientes llegados al PDV). Es independiente del SLA asignado.'],['Count_llegadas','Promedio de registros válidos del distrito, no suma.'],['Días necesarios',daysMode==='promedio'?'Promedio de registros':'Mayor valor'],['Puntos asociados','Puntos vinculados a las zonas exportadas; pueden estar ubicados fuera de sus distritos. El filtro de tipo de punto solo limita la hoja Puntos.']];
+  for(const [key,title,kind] of [['areas','Áreas','areas'],['zonas','Zonas','zonas'],['tipos','Tipos de zona','tipos'],['envios','Tipos de envío','envios'],['departamentos','Departamentos'],['provincias','Provincias'],['puntoTipos','Tipos de punto']])info.push(['Filtro: '+title,(currentFilters[key]||[]).map(id=>kind?lookup(kind,id):id).join(' | ')||'Todos']);
+  info.push(['Filtro: búsqueda',currentFilters.q||'Sin búsqueda']);
+  return {zoning,operational,points,info};
+}
+function exportZoningExcel(){
+  if(!state)throw Error('Primero ingresa a la aplicación.');
+  if(!window.XLSX)throw Error('No se cargó el generador de Excel. Revisa tu conexión y recarga.');
+  const tables=buildZoningExport(state,catalog,filters(),$('daysMode').value);
+  if(tables.zoning.length===1)throw Error('No hay distritos zonificados que coincidan con los filtros. Prueba limpiar los filtros.');
+  const book=XLSX.utils.book_new();
+  for(const [key,name] of [['zoning','Zonificación'],['operational','Indicadores por distrito'],['points','Puntos'],['info','Información']]){
+    const table=tables[key],sheet=XLSX.utils.aoa_to_sheet(table);
+    sheet['!cols']=table[0].map((h,i)=>({wch:Math.min(key==='info'?100:55,Math.max(14,...table.map(r=>String(r[i]??'').length))+2)}));
+    if(key!=='info')sheet['!autofilter']={ref:sheet['!ref']};
+    if(key==='operational')for(let r=1;r<table.length;r++){const cell=sheet[XLSX.utils.encode_cell({r,c:15})];if(cell)cell.z='0.00%';}
+    if(key==='points')for(let r=1;r<table.length;r++){const cell=sheet[XLSX.utils.encode_cell({r,c:13})];if(cell&&cell.v)cell.l={Target:cell.v,Tooltip:'Abrir ubicación en Google Maps'};}
+    XLSX.utils.book_append_sheet(book,sheet,name);
+  }
+  const stamp=new Date().toLocaleDateString('en-CA',{timeZone:'America/Lima'}).replace(/[^0-9-]/g,'');
+  XLSX.writeFile(book,'Zonificacion_'+stamp+'.xlsx',{compression:true});
+  say('Excel generado: '+(tables.zoning.length-1)+' asignaciones y '+(tables.operational.length-1)+' distritos únicos.');
+}
+$('exportZoning').onclick=run(exportZoningExcel);
+
+</script>
+
+<script>
+function slaLabel(d){return 'Reparto '+fmt(d.slaReparto)+' + traslado '+fmt(d.slaTraslado)+' = '+fmt(d.sla)+' días';}
+function updateSlaTotal(){const a=$('assignReparto').value,b=$('assignTraslado').value;$('assignSla').value=a!==''&&b!==''?Math.round((Number(a)+Number(b))*1e8)/1e8:'';}
+$('assignReparto').oninput=updateSlaTotal;$('assignTraslado').oninput=updateSlaTotal;
+$('migrationButton').onclick=()=>{$('migrationFile').value='';$('migrationFile').click();};
+$('migrationFile').onchange=run(async e=>{
+ const file=e.target.files[0];if(!file)return;if(file.size>20*1024*1024)throw Error('El respaldo supera 20 MB.');
+ const payload=JSON.parse(await file.text());
+ if(!confirm('Importar '+file.name+' a esta base vacía. Los SLA antiguos pasan a reparto y traslado 0. ¿Continuar?'))return;
+ await write('importarRespaldo',payload);say('Datos migrados. Revisa el desglose de SLA por distrito.');
+});
+$('backupButton').onclick=run(async()=>{
+ const data=await rpc('obtenerDatos',auth.token);const blob=new Blob([JSON.stringify({schemaVersion:2,exportado:new Date().toISOString(),data},null,2)],{type:'application/json'});
+ const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='Zonificacion_respaldo_'+new Date().toISOString().slice(0,10)+'.json';a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000);
+});
+</script>
+</body></html>
