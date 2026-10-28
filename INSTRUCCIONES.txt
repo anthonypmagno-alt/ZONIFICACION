@@ -1,0 +1,218 @@
+PORTAL COMPLETO: REVISION DE GUIAS + PENALIDADES
+
+Este paquete integra Penalidades dentro del portal principal. El index.html conserva el inicio de sesión de Revisión de Guías. penalidades.html valida y reutiliza la sesión del portal; no tiene un formulario de login propio.
+
+PUBLICAR EN GITHUB PAGES
+1. Descomprime el ZIP.
+2. En el repositorio que publicarás con GitHub Pages, carga el CONTENIDO de esta carpeta en la raíz (donde quedará index.html). No subas la carpeta contenedora como un nivel adicional.
+3. Conserva juntos index.html, config.js, bridge.js, gestion-v2.html, xlsx-resumen.js, pdv.html, pdv-v2.html, penalidades.html, process-worker.js, pdf-pdv.js y brecha-costos.js.
+4. Espera a que GitHub Pages termine de publicar y abre la raíz del portal, por ejemplo https://TU-USUARIO.github.io/TU-REPOSITORIO/. Inicia sesión ahí y entra a la pestaña Penalidades. No abras un index.html independiente de Penalidades.
+
+ACTUALIZACION DE PENALIDADES (09-10-2026)
+- El filtro “Brecha (columna E)” permite seleccionar uno o varios valores de la columna E (Brecha) del Excel de penalidades.
+- La descarga Excel del detalle incluye GUIA, PENALIDAD, PDV, PORCENTAJE DE EXONERACION, MONTO FINAL (S/), MOTIVO DE DECISION y MONTO INICIAL DE PENALIDAD (S/) como última columna. El archivo descargado termina en _MONTO_INICIAL.xlsx.
+- Estos cambios son de interfaz y no requieren ejecutar SQL en Supabase.
+- Al actualizar manualmente, reemplaza index.html y penalidades.html. Si subes todo el ZIP, carga su contenido completo en la raíz del repositorio y conserva juntos todos los archivos indicados arriba.
+
+La configuración apunta al proyecto Supabase akultekodxqmmfchxviq. El login usa las cuentas existentes de Supabase Auth. El archivo index.html corresponde al portal completo y debe conservarse para que se muestre ese login.
+
+ACTUALIZACION SQL PARA EL TIMEOUT DEL RESUMEN
+En Supabase, dentro del mismo proyecto, ejecuta una vez SUPABASE_SQL/supabase_penalidades_resumen_rapido.sql. Actualiza únicamente la función que entrega el resumen inicial. No borra tablas, liquidaciones, guías ni decisiones. La pantalla carga primero el resumen por periodo/PDV; las guías se solicitan por páginas cuando seleccionas una liquidación.
+
+OTROS SQL (SOLO SI APLICA)
+- supabase_penalidades_tasa_firma.sql: ejecutar solo si faltan las columnas Estado/Tasa de firma o si se requiere esa corrección. Es incremental y no reinicia datos.
+- supabase_penalidades_autorizacion_perfiles.sql: ejecutar solo si una cuenta válida de administrador/encargado muestra “Cuenta no autorizada” DESPUES de iniciar sesión. No corrige contraseñas.
+- supabase_costos_brecha_compartidos.sql: necesario únicamente si aún no se instaló la configuración compartida de costos de brecha.
+
+No ejecutes una instalación desde cero ni scripts de reinicio para esta actualización.
+
+CAMBIO DE CRUCE
+En exportación de guías se busca primero coincidencia de guía y PDV; si el PDV no coincide, se usa la coincidencia por guía y la actualización más reciente.
+
+
+CAMPO MONTO DE LIQUIDACION (10-10-2026)
+- El monto se ingresa por cada liquidación en la tabla “Registros guardados”, antes de Penalidad total.
+- “Liq. final” se calcula como Monto de liquidación menos Saldo de penalidad. Mientras falte ingresar un monto, el resultado figura como pendiente.
+- Los indicadores del detalle muestran el monto de liquidación en azul y la Liq. final en amarillo dorado.
+- Para conservar y compartir el monto entre usuarios, ejecuta una sola vez SUPABASE_SQL/supabase_penalidades_monto_liquidacion.sql en el mismo proyecto Supabase. El script es incremental, conserva los registros y decisiones y no requiere reinstalación.
+
+AJUSTE DE TABLA Y MONTO (10-10-2026)
+- La tabla de liquidaciones aprovecha el ancho de la pantalla y ajusta los encabezados para mostrar todas sus columnas en escritorio. En pantallas pequeñas conserva el desplazamiento horizontal.
+- El campo Monto de liquidación muestra S/ y dos decimales. Al editarlo, se acepta separador decimal con punto o coma; al guardar vuelve a mostrarse con formato monetario.
+- No requiere un SQL adicional. El guardado compartido del monto sigue requiriendo la columna instalada por supabase_penalidades_monto_liquidacion.sql.
+- El enlace de Penalidades del index.html usa un nuevo identificador para evitar la caché anterior.
+
+
+ACTUALIZACION MONTO INICIAL DE PENALIDAD (11-10-2026)
+- El monto inicial se toma de la penalidad original antes de aplicar el porcentaje de exoneración.
+- El monto final permanece como saldo posterior a la exoneración.
+- El enlace de Penalidades usa la versión 20261011-monto-inicial-verificado-5 para evitar la caché anterior.
+- Este cambio es de exportación y no requiere ejecutar SQL.
+
+
+ACTUALIZACION GESTION DE GUIAS V2 (12-10-2026)
+- El resumen incluye el botón “Solo casos críticos”. Al activarlo, conserva los filtros elegidos y muestra únicamente los PDV cuyo “Total crítico” es mayor que cero; recalcula subtotales y total general para los PDV visibles.
+- “Excel resumen” exporta la tabla V2 que se ve en pantalla, con encabezados agrupados, filas por región y área, subtotales, total general y colores. La descarga respeta los filtros aplicados y los grupos que estén desplegados o contraídos.
+- El resumen se descarga como un archivo .xlsx real, conservando combinaciones de encabezados, grupos, subtotales, colores y estilos.
+- El Excel agrega una columna COMENTARIO a la derecha del cuadro resumen original (después de 💬), con el texto guardado para cada PDV.
+- El generador XLSX está incluido localmente como xlsx-resumen.js, así que la descarga no depende de un CDN ni requiere ejecutar SQL.
+- El enlace de Gestión de guías V2 incluye el identificador 20261012-resumen-comentarios-xlsx-5 para evitar que el navegador conserve la versión anterior.
+
+
+RETENCION PARA MEJORA (13-10-2026)
+- El porcentaje se aplica al saldo de la penalidad después de descontar la exoneración. El monto retenido se muestra en el detalle, los indicadores y la tabla de liquidaciones.
+- La retención es condicional y no se resta de la Liq. final.
+- El Excel de detalle conserva sus columnas existentes y termina con RETENCIÓN PARA MEJORA (%) y RETENCIÓN PARA MEJORA (S/).
+- Para conservar la retención entre sesiones y compartirla entre usuarios, ejecuta una sola vez SUPABASE_SQL/supabase_penalidades_retencion_mejora.sql en el mismo proyecto Supabase. El cambio agrega una columna a las decisiones existentes y actualiza tres funciones; no elimina registros.
+- Publica el contenido completo del ZIP en la raíz del repositorio. El enlace de Penalidades del index usa la versión 20261013-resumen-penalidad-1.
+
+
+RESUMEN CONTRAIBLE POR PENALIDAD (13-10-2026)
+- Cada penalidad muestra una fila agregada. “Expandir todo” abre los motivos y los subtipos; “Contraer por penalidad” vuelve a una fila por penalidad. Los motivos conservan su propio control para abrir o cerrar los subtipos de Brecha o SLA.
+- El enlace de Penalidades se actualiza con la versión 20261013-resumen-penalidad-1.
+- No requiere ejecutar SQL adicional.
+
+
+AJUSTE DE RETENCION Y ANCHO DE TABLAS (13-10-2026)
+- El resumen por penalización y motivo de decisión agrega la columna “Retención para mejora (S/)” después del saldo; los importes se totalizan en cada grupo y en el total general.
+- Se amplía la columna de retención para mejora en las liquidaciones guardadas y en el detalle para facilitar la lectura.
+- El detalle completo reduce el ancho de sus columnas para mostrar más información a la vez; conserva desplazamiento horizontal cuando la pantalla no alcanza y mantiene fijas las columnas de selección, fecha, PDV y guía.
+- El enlace de Penalidades del index.html usa la versión 20261013-retencion-ancho-tablas-2 para actualizar la caché.
+- Es un ajuste visual y no requiere ejecutar SQL adicional.
+
+
+CORRECCION DE DESTINO Y ULTIMO ESCANEO (13-10-2026)
+- Mapeo geográfico de Exportación de guía: Distrito = Colonia de destino; Provincia = Ciudad de Destino; Departamento = Provincia de destino.
+- Mapeo por columna de Exportación de guía: H = fecha/hora del último escaneo; I = tipo de escaneo más reciente; L = estatus de firma. El importador también reconoce los encabezados si cambian.
+- Detalle completo muestra destino, tipo de escaneo combinado con estatus de firma y fecha/hora del último escaneo. Supabase conserva estos datos junto con las liquidaciones.
+- Ejecuta una vez SUPABASE_SQL/supabase_penalidades_fecha_escaneo.sql. Es incremental y no elimina liquidaciones ni decisiones: agrega la fecha/hora, actualiza el guardado del detalle y la lectura paginada. También incluye un RPC pequeño para guardar destino, escaneo, firma, zona y SLA en lotes, sin reescribir todas las columnas de cada guía.
+- Después, vuelve a cargar Exportación de guía en Penalidades. La importación actualiza las liquidaciones existentes y sincroniza los campos recuperados; no borres ni recrees registros. Los valores históricos que no se guardaron se completan al volver a importar la exportación.
+- Al cargar el archivo, el aviso informa cuántas filas incluyen destino, escaneo, firma y fecha completos, además de cuántas penalidades se enlazaron.
+- El enlace de Penalidades del index.html usa la versión 20261015-sla-resumen-montos-7 para actualizar la caché.
+
+RETENCION CALCULADA SOBRE EL SALDO (13-10-2026)
+- El porcentaje de retención se calcula sobre el saldo de la penalidad después de aplicar la exoneración.
+- El monto retenido sigue siendo condicional y no se descuenta de la Liquidación final.
+- La base aparece aclarada en el detalle; los resúmenes, el Excel y Supabase usan el mismo cálculo.
+- Exoneración y saldo se redondean por guía a dos decimales; el saldo es el remanente para que exoneración + saldo coincidan con la penalidad original.
+- Ejecuta una vez SUPABASE_SQL/supabase_penalidades_retencion_sobre_saldo.sql para actualizar el resumen que Supabase devuelve al abrir el portal. No modifica ni elimina registros.
+- El enlace de Penalidades del index.html usa la versión 20261013-retencion-sobre-saldo-1 para actualizar la caché.
+
+OPTIMIZACION DE SINCRONIZACION (13-10-2026)
+- El guardado ya no copia las filas completas de los Excel fuente en cada sincronización; solo procesa registros, liquidaciones, grupos y guías.
+- Los detalles se cargan en páginas de hasta 1,000 guías y los lotes de guardado de guías también admiten hasta 1,000 filas. Se procesan hasta dos liquidaciones independientes en paralelo; los lotes de una misma liquidación conservan su orden.
+- Los cambios de exoneración, retención y motivo se envían a una función que actualiza solo la tabla de decisiones; no vuelve a escribir las otras columnas de esas guías. Los cambios de datos fuente sí actualizan los campos de la guía.
+- Los grupos solo se envían cuando cambian, y la activación de Penalidades se ejecuta una sola vez por sesión.
+- El indicador superior informa el avance de guías sincronizadas.
+- Las decisiones de exoneración, retención y motivo se envían directamente por sus IDs modificados. Este guardado no copia ni compara todas las guías cargadas en la pestaña. Los cambios de archivos fuente, grupos y liquidaciones siguen el guardado general.
+- Las solicitudes a Supabase tienen un límite de 60 segundos; si alguna falla, la pantalla muestra “Cambios sin guardar”, habilita Reintentar y detalla la fase/lote en el aviso y en el estado de almacenamiento.
+- El CSV de lints enviado el 13-10-2026 confirma que `public.penalidades_actualizar_decisiones(p_decisiones jsonb)` ya existe en Supabase; no vuelvas a ejecutar ese SQL.
+- El enlace de Penalidades del index.html usa la versión 20261015-sla-resumen-montos-7 para actualizar la caché.
+- Los cambios de Exportación/Zonificación se envían por un RPC específico en lotes de hasta 1,000 filas; los cambios de penalidad siguen su ruta de guardado actual. La pantalla muestra la fase y el avance; valida el conteo recibido y conserva los cambios como pendientes si Supabase devuelve un error o menos filas.
+
+AJUSTE DE PENALIDAD TOTAL Y COPIA DE MOTIVO (13-10-2026)
+- En “Registros guardados” se agregó “Ajuste penalidad total”. Si el campo queda vacío, el cálculo usa la penalidad total original. Si se ingresa un monto, ese valor sustituye el total para calcular el saldo de penalidad: saldo = ajuste − monto exonerado. El ajuste no puede ser menor al monto ya exonerado.
+- “Liq. final” conserva la fórmula existente: monto de liquidación − saldo de penalidad. Ejemplo: penalidad original S/ 2,500, ajuste S/ 2,300 y monto exonerado S/ 500 producen saldo S/ 1,800; Liq. final será el monto de liquidación menos S/ 1,800.
+- El ajuste se guarda por periodo y PDV en Supabase. El detalle de cada guía conserva los importes originales del Excel; el ajuste no se distribuye entre guías. El total general del resumen de penalización sí usa la base ajustada.
+- En la columna “Motivo de decisión” del detalle se agregó un botón “Copiar motivo” por guía. Copia el texto visible en el campo, aunque todavía no se haya guardado.
+- En Supabase, ejecuta una sola vez `SUPABASE_SQL/supabase_penalidades_ajuste_penalidad_total.sql`. El script agrega una columna nullable y una función RPC; actualiza la función de resumen para devolver el ajuste. No borra ni reinicia datos.
+- Publica el contenido completo del ZIP en la raíz del repositorio. El enlace de Penalidades del index.html usa la versión `20261013-ajuste-penalidad-copiar-motivo-1`.
+
+
+DUPLICAR LIQUIDACIONES PARA SIMULAR (14-10-2026)
+- Cada fila de “Registros guardados” incluye “Duplicar”. La copia se marca SIMULACIÓN y abre un detalle independiente con las decisiones, montos y motivos iniciales copiados.
+- Los cambios guardados en una simulación no modifican las guías, decisiones ni montos del registro real. Las simulaciones tampoco se actualizan al importar de nuevo los Excel; para probar datos fuente nuevos, duplica la liquidación real actualizada.
+- La tabla presenta subtotales separados para registros reales y simulaciones, tanto por grupo como en el total general. El Excel de una simulación lleva el prefijo SIMULACION_.
+- Antes de crear o guardar simulaciones en Supabase, ejecuta una sola vez `SUPABASE_SQL/supabase_penalidades_simulaciones.sql`. Esta migración conserva registros y agrega una marca para distinguir simulaciones; el portal bloquea la duplicación si detecta que la migración no está instalada. Después de ejecutar el SQL, recarga el módulo.
+- Las liquidaciones reales mantienen una sola fila por periodo y PDV. Las copias quedan con claves propias y pueden eliminarse individualmente con el botón “Eliminar”.
+- El enlace de Penalidades usa el identificador `20261014-simulaciones-1` para actualizar la caché.
+
+
+CORRECCION DEL GUARDADO DE EXPORTACION (15-10-2026)
+- Distrito, provincia, departamento, tipo de escaneo, estado de firma, fecha/hora del escaneo, tipo de zona y SLA se almacenan juntos en `public.penalidades_guias`. Zona y SLA ya estaban contemplados en el guardado previo; los campos de exportación agregados después dependen de que el SQL de Supabase y el HTML publiquen la misma versión. Si se usa HTML nuevo con funciones SQL anteriores, pueden verse los datos en pantalla sin que queden guardados.
+- La nueva versión envía estos cambios por `penalidades_actualizar_datos_exportacion`, en lotes de hasta 1,000 IDs, y comprueba cuántas filas actualizó Supabase. El indicador de la tabla detalle ahora también muestra la fase y el avance; cada solicitud tiene un límite de 60 segundos y el error indica el lote que falló.
+- Para actualizar: reemplaza `index.html` y `penalidades.html` con los de este ZIP; en el mismo proyecto Supabase ejecuta `SUPABASE_SQL/supabase_penalidades_fecha_escaneo.sql` si aún no se ejecutó esta versión de la migración. Es una actualización incremental: no borra liquidaciones, guías ni decisiones.
+- Tras publicar, entra por el inicio de sesión del portal y confirma que Penalidades abra con `v=20261015-sla-resumen-montos-7`. Luego carga Exportación de guía, pulsa “Actualizar desde archivos” y finalmente “Guardar cambios”. Al recargar, destino, escaneo, firma y fecha deben seguir visibles.
+
+
+CORRECCION DEL COMPARADOR DE GUARDADO (15-10-2026)
+- El ZIP anterior comparaba también metadatos locales del Excel como `sourceRow`, `dateISO`, `costRaw` y `sourceZone`, además de indicadores derivados y el orden de las propiedades JSON. Esos valores no representan cambios persistentes. Al importar Exportación, el comparador podía clasificar miles de guías como cambios de datos fuente y volver a enviarlas completas; por eso el lote específico de Exportación no se llegaba a usar.
+- La corrección compara una lista explícita de campos persistidos con valores JSON normalizados, ignora metadatos transitorios y envía destino, escaneo, firma, zona y SLA por `penalidades_actualizar_datos_exportacion`. Si una fila no cambió en columnas guardadas, se omite.
+- No cambia tablas ni requiere un SQL nuevo si ya ejecutaste `SUPABASE_SQL/supabase_penalidades_fecha_escaneo.sql` del ZIP anterior. Mantén el SQL disponible por si aún no se instaló ese RPC; volver a ejecutar esa migración es incremental y no elimina datos.
+- Reemplaza en el repositorio `index.html` y `penalidades.html` de este ZIP y publica. El enlace de Penalidades debe mostrar `v=20261015-sla-resumen-montos-7`. Después importa Exportación, pulsa “Actualizar desde archivos” y guarda. El avance indica la fase y lote actual; si falla, comparte el texto de error que aparezca.
+
+
+CORRECCION DEL ERROR AL GUARDAR (15-10-2026)
+- Se corrigió el error `retentionPercentValue is not defined`: el puente de guardado de Supabase corre fuera del ámbito de la lógica de pantalla, así que ahora tiene su propia normalización del porcentaje de retención.
+- La falla ocurría al preparar guías modificadas después de importar archivos, antes de enviar el lote a Supabase.
+- No requiere ejecutar SQL ni modifica los datos existentes.
+- Reemplaza `index.html` y `penalidades.html` por los incluidos en este ZIP y publica. El enlace actualizado usa `v=20261015-sla-resumen-montos-7`; vuelve a cargar los archivos fuente y pulsa Guardar cambios.
+
+
+MULTIPLICADORES POR MONTO EN EXCEDE EL SLA (15-10-2026)
+- Se conserva el resumen existente por SLA y escaneo / firma, y se agrega debajo una tabla adicional para redefinir montos. Cada fila representa un monto distinto de la columna Costo entre las guías cuya penalización es “Excede el SLA” (por ejemplo, S/ 150.00 o S/ 3.00); también muestra la cantidad de guías y el total recalculado.
+- El campo “Monto redefinido por guía” reemplaza el monto fuente para todas las guías de ese subtipo. Por ejemplo, si el monto fuente es S/ 150.00, se puede cambiar a S/ 140.00; si es S/ 3.00, se puede cambiar a S/ 3.50. El total se calcula monto redefinido × cantidad de guías.
+- Si el campo queda vacío, se conserva el monto fuente del Excel. La configuración se guarda por periodo, PDV y monto fuente, es compartida entre usuarios de ese PDV y solo ADMINISTRADOR puede modificarla. Los conteos de la tabla incluyen únicamente guías “Excede el SLA” del PDV seleccionado; cambiar un monto no afecta a otros PDV.
+- Si los campos aparecen bloqueados, el aviso encima de la tabla indica la causa: falta ejecutar la migración en Supabase o la sesión no tiene rol ADMINISTRADOR.
+- La penalidad base aplicada, exoneración, saldo, retención, resúmenes y Excel usan el monto resultante. Si ya se había ejecutado la versión anterior por rangos SLA, la migración conserva esos valores iniciales cuando puede asociarlos con los montos fuente.
+- Ejecuta la versión actual de `SUPABASE_SQL/supabase_penalidades_tarifas_sla.sql` en el mismo proyecto Supabase. La migración es incremental; no borra liquidaciones ni guías. No vuelvas a cargar los archivos fuente.
+- Después publica el ZIP completo. Abre una liquidación, edita los montos SLA de ese PDV y pulsa “Guardar montos SLA del PDV”. El enlace de Penalidades usa `v=20261015-sla-resumen-montos-7`. Al ejecutar la migración, los montos anteriores se copian a cada PDV que tenga el mismo periodo y monto fuente; luego cada PDV puede redefinirlos de forma independiente.
+
+
+PRECISION DE MONTOS REDEFINIDOS SLA (15-10-2026)
+- El campo “Monto redefinido por guía” permite guardar hasta 9 decimales y muestra al menos 4. Por ejemplo, `0,996648045` se conserva con esa precisión en la configuración del PDV.
+- Los montos de penalidad y sus porcentajes se agregan sin redondear guía por guía; cada total se redondea a 2 decimales al final. Por ejemplo, 162 guías × S/ 0,9966 muestran S/ 161,45, no S/ 162,00.
+- En el mismo Supabase ejecuta nuevamente `SUPABASE_SQL/supabase_penalidades_tarifas_sla.sql`. Amplía la precisión de la configuración existente y actualiza la función de guardado para el periodo y PDV. Conserva los valores previos; no borra liquidaciones ni guías y no requiere volver a importar archivos. El SQL solicita recargar la caché de funciones.
+- Publica el contenido del ZIP en la raíz del repositorio. El enlace de Penalidades debe usar `v=20261015-sla-resumen-montos-7`.
+
+
+CORRECCION DEL TOTAL SLA RECALCULADO (15-10-2026)
+- Se corrige el redondeo prematuro por guía. El total recalculado multiplica el monto con precisión completa por la cantidad de guías y redondea el resultado agregado a 2 decimales. Ejemplo: 162 × S/ 0,9966 = S/ 161,45.
+- Los resúmenes remotos de Supabase y las bases, exoneraciones, saldos y retenciones locales agregan los montos precisos y redondean al final, para evitar diferencias entre la tabla adicional y el resumen de liquidación.
+- Ejecuta nuevamente `SUPABASE_SQL/supabase_penalidades_tarifas_sla.sql` en el mismo proyecto Supabase para actualizar el cálculo del resumen. Es incremental, conserva los valores y datos existentes, y no requiere reimportar archivos.
+- Publica el ZIP completo; el enlace de Penalidades usa `v=20261015-sla-resumen-montos-7`.
+
+
+CORRECCION DEL RPC DE MONTO SLA (15-10-2026)
+- El mensaje de error `Could not find the function ... (p_pdv, p_periodo)` indica que el navegador envió solo PDV y periodo. La función de guardado requiere tres datos: `p_periodo`, `p_pdv` y la lista `p_multiplicadores`.
+- El HTML actualizado envía los tres parámetros; la migración SQL crea la función con esa misma firma y solicita recargar el esquema de PostgREST.
+- Publica `index.html` y `penalidades.html` de este ZIP en la raíz del repositorio y entra de nuevo por el portal. Verifica que el enlace abra `penalidades.html?v=20261015-sla-resumen-montos-7`. Ejecuta nuevamente el SQL SLA del ZIP si aún no lo hiciste. No hace falta volver a importar Excel.
+
+
+ACTUALIZACION 2026-10-19: MODULOS Y CATALOGOS DE COMENTARIO
+- La pestaña “Estadísticas por PDV” es un módulo independiente de “Consulta desde Excel” y “Penalidades”. Reutiliza la última consulta compartida; los archivos se cargan y actualizan desde Consulta desde Excel.
+- En Gestión de guías V2, el comentario de encargado comienza con Subcampo 1 y Subcampo 2. El segundo muestra únicamente las opciones asociadas al primer campo. El comentario libre, cierre y notificación al PDV se mantienen.
+- La pestaña “Catálogo de comentarios” permite al administrador agregar, editar o quitar opciones de Subcampo 1 y mantener las opciones dependientes de Subcampo 2. El catálogo se comparte con los usuarios autorizados.
+- El catálogo inicial incluye ENTREGA, DEVOLUCIÓN, TRASLADO y OTROS, junto con las opciones de ENTREGA y DEVOLUCIÓN solicitadas. Puedes ajustar esos valores desde el módulo.
+- Para guardar el catálogo y las clasificaciones por guía, ejecuta una sola vez `supabase_gestion_v2_comentarios_catalogo.sql` en SQL Editor del mismo proyecto Supabase V16. El script crea tablas privadas nuevas y un RPC; no altera storage.objects, comentarios previos ni datos de penalidades.
+- Después de ejecutar el SQL, vuelve a iniciar sesión o actualiza Gestión de guías V2 para cargar el catálogo compartido.
+
+PERMISOS POR USUARIO Y PRECIO SLA POR DISTRITO (26-10-2026)
+- En Usuarios, el administrador puede configurar por persona si puede ver y ejecutar cada módulo: Gestión, Consulta desde Excel, Estadísticas por PDV, Gestión V2, SLA de paquetes, Catálogo de comentarios y Penalidades. Ejecutar requiere también permiso de Ver.
+- Los usuarios que aún no tengan una matriz guardada mantienen acceso por compatibilidad. Los administradores conservan acceso completo. Al crear un usuario, la matriz elegida se guarda después de que se crea su cuenta; si ese guardado falla, el aviso permite completar la configuración desde “Configurar” en la lista.
+- En SLA de paquetes, el administrador puede definir hasta 20 rangos horarios y establecer una tarifa porcentual para cada uno. Los tramos son continuos: incluyen su hora inicial y excluyen la final; el tramo final queda abierto.
+- El administrador puede fijar el precio del paquete por departamento/provincia/distrito del archivo activo. El monto por guía es precio del distrito × tarifa del tramo SLA / 100, redondeado a dos decimales. El detalle muestra precio, tarifa y monto; el resumen muestra cantidad y monto por tramo. Los precios admiten hasta cuatro decimales.
+- Para habilitar la matriz de permisos, los precios y la validación del módulo SLA, ejecuta `supabase_gestion_v2_sla_paquetes.sql` actualizado en el proyecto Supabase de Gestión de Guías. Es incremental: mantiene las cargas y los rangos SLA existentes y no modifica `storage.objects`.
+- Si aparece `DELETE requires a WHERE clause` al guardar rangos, vuelve a ejecutar este SQL actualizado; la función ahora limita explícitamente el borrado a las filas de rangos que reemplaza.
+- Después de ese SQL, vuelve a ejecutar `supabase_gestion_v2_comentarios_catalogo.sql` para que el catálogo y las clasificaciones de comentarios también respeten la matriz de módulos. Este archivo conserva las opciones y clasificaciones existentes.
+- Publica el contenido completo del ZIP en la raíz del repositorio y vuelve a iniciar sesión para cargar los permisos. Si un usuario cambia de permisos mientras tiene la aplicación abierta, debe actualizar la pestaña.
+
+RESUMEN DE GESTIÓN V2 · DESGLOSE DE GUÍAS CRÍTICAS (26-10-2026)
+- La columna Brecha crítica se divide en En el PDV y No llegados al PDV; Cola larga crítica se divide en No devuelto y Por devolver.
+- El desglose aparece en los grupos y subtotales por comentario, Subtipo 2, Subtipo 1, PDV y total general.
+- La segunda hoja del Excel combinado (“Resumen subtipos”) contiene las mismas cuatro columnas.
+- No requiere ejecutar SQL. Reemplaza el contenido del repositorio con el ZIP actualizado y vuelve a abrir Gestión de guías V2.
+
+CAMBIO 2026-10-27 — DESGLOSE CRÍTICO EN LA VENTANA DE COMENTARIO
+
+En Gestión de Guías V2, al pulsar el botón verde de comentario de una fila de PDV, la ventana muestra primero las clasificaciones críticas de ese PDV. Las cuatro categorías (cola larga crítica en PDV, cola larga crítica por devolver, brecha crítica en PDV y brecha crítica no llegados al PDV) aparecen solo cuando su conteo es mayor que cero. Cada una se desglosa por Subtipo 1, Subtipo 2 y comentario del encargado, con conteo de guías. Debajo permanece el campo para editar el comentario del PDV. No requiere ejecutar SQL.
+
+CAMBIO 2026-10-27 — CLASIFICACIONES CRÍTICAS EN EL EXCEL
+
+El Excel completo agrega en la primera hoja una columna “Clasificación de paquetes críticos · subtipos y comentario encargado” al lado del comentario del resumen. Cada PDV muestra sus categorías críticas, subtotales, Subtipo 1, Subtipo 2, comentario del encargado y conteo; las categorías con cero no se exportan. La hoja “Detalle guías” conserva el comentario de gestión del encargado por guía. No requiere SQL; publicar la carpeta completa del ZIP.
+
+CAMBIO 2026-10-28 — CARGA DEL DETALLE DE PENALIDADES
+- Al seleccionar una liquidación, el módulo normaliza la respuesta JSON del RPC de detalle y valida que la cantidad de guías recibidas coincida con el total mostrado en el resumen.
+- Si la respuesta llega incompleta o con un formato inesperado, no se presenta como una tabla vacía ni se guarda como detalle cargado. La fila se puede volver a seleccionar para reintentar; el mensaje muestra las cantidades recibidas y esperadas.
+- No requiere SQL si `penalidades_obtener_items` ya está instalada. Si persiste una diferencia, ejecuta la versión actual de `supabase_penalidades_v2.sql`; es incremental y conserva los registros.
+- Publica `index.html` y `penalidades.html` del ZIP actualizado; el enlace del módulo incluye un identificador de caché nuevo.

@@ -1,7 +1,6 @@
-// Solo URL del proyecto y clave pública publishable (sb_publishable_...) o anon.
-// NUNCA pongas una service_role o sb_secret en archivos de la web.
-window.ZD_CONFIG = {
-  supabaseUrl: 'https://cotfedkvtftmimpgucji.supabase.co',
-  supabaseKey: 'sb_publishable_WnLdB2RKPxw2H6DIMWCgUg_MS3pdXjQ',
-  functionName: 'zonificacion-api'
+// Clave pública: nunca colocar service_role ni contraseñas aquí.
+window.V16_CONFIG={
+ url:'https://akultekodxqmmfchxviq.supabase.co',
+ key:'sb_publishable_q2JKc7YQg9-8M7TARE3jSA_FdRUz8jy',
+ loginDomain:'revision.local'
 };
