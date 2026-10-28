@@ -216,3 +216,10 @@ CAMBIO 2026-10-28 — CARGA DEL DETALLE DE PENALIDADES
 - Si la respuesta llega incompleta o con un formato inesperado, no se presenta como una tabla vacía ni se guarda como detalle cargado. La fila se puede volver a seleccionar para reintentar; el mensaje muestra las cantidades recibidas y esperadas.
 - No requiere SQL si `penalidades_obtener_items` ya está instalada. Si persiste una diferencia, ejecuta la versión actual de `supabase_penalidades_v2.sql`; es incremental y conserva los registros.
 - Publica `index.html` y `penalidades.html` del ZIP actualizado; el enlace del módulo incluye un identificador de caché nuevo.
+
+CAMBIO 2026-10-28 — RESTAURAR LIQUIDACIONES REIMPORTADAS
+- Importar nuevas liquidaciones no elimina los registros guardados.
+- Las filas que Supabase todavía devuelve permanecen visibles aunque haya una marca local de eliminación. Esa marca ya no puede ocultarlas ni provocar su borrado durante la sincronización de otro archivo; Supabase es la fuente de verdad.
+- Si se vuelve a importar el mismo periodo y PDV, el módulo retira la marca local. Si la liquidación aún existe en Supabase, recupera sus guías antes de actualizar y conserva motivos y porcentajes de decisión.
+- No requiere SQL. Si la liquidación fue borrada físicamente en Supabase, vuelve a importar el Excel original para reconstruir las guías; las decisiones previas solo se recuperan desde filas existentes o desde un respaldo.
+- Publica el contenido completo del ZIP actualizado.

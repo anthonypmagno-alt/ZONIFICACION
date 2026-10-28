@@ -794,8 +794,20 @@
       const now=new Date().toISOString(),indexes={guides:buildGuideIndex(),breaches:buildBreachIndex(),zones:buildZoneIndex()};let created=0,refreshed=0;
       for(const group of groups.values()){
         const id=recordKey(group.period,group.pdv),deletedAt=timestampValue(state.deletedRecords?.[id]);
-        if(deletedAt&& !group.rows.some(row=>timestampValue(row.sourceImportedAt)>deletedAt))continue;
-        const fresh=getRecordItems(group.period,group.pdv,indexes),existing=state.records.find(record=>record.id===id);
+        const reimportedAfterDelete=deletedAt&&group.rows.some(row=>timestampValue(row.sourceImportedAt)>deletedAt);
+        if(deletedAt&&!reimportedAfterDelete)continue;
+        // Si se vuelve a importar el mismo periodo + PDV después de borrarlo,
+        // la nueva carga rehabilita ese registro. Mantener la marca local haría
+        // que Supabase lo volviera a ocultar al recargar, aunque la fila exista.
+        if(reimportedAfterDelete){state.deletedRecords=state.deletedRecords||{};delete state.deletedRecords[id];}
+        const fresh=getRecordItems(group.period,group.pdv,indexes);let existing=state.records.find(record=>record.id===id);
+        // La fila real puede seguir en Supabase aunque una marca local la haya
+        // ocultado del resumen. Recuperarla antes de refrescar conserva sus
+        // decisiones y evita que la nueva carga las reemplace por valores cero.
+        if(!existing&&reimportedAfterDelete&&cloudMode){
+          const remoteRecord=(exoV2Baseline?.records||[]).find(record=>record.id===id);
+          if(remoteRecord){existing={...remoteRecord,items:await fetchStoredRecordItems(id)};state.records.push(existing);}
+        }
         if(existing){if(!Array.isArray(existing.items))existing.items=await fetchStoredRecordItems(existing.id);existing.items=preserveDecisions(fresh,existing.items);existing.sourceFiles=sourceFilesSnapshot();existing.updatedAt=now;existing.sourceSyncAt=now;refreshed++;}
         else if(fresh.length){state.records.push({id,period:group.period,pdv:group.pdv,status:'pendiente',signatureRate:null,liquidationAmount:null,penaltyTotalAdjustment:null,createdAt:now,updatedAt:now,sourceSyncAt:now,sourceFiles:sourceFilesSnapshot(),items:fresh});created++;}
       }
@@ -1324,10 +1336,20 @@
     function setAvailable(available){appReady=available;if($('importStateBtn'))$('importStateBtn').disabled=!available;if($('exportStateBtn'))$('exportStateBtn').disabled=!available;$('openCreateBtn').disabled=!available;$('saveBtn').disabled=!available;$('createGroupBtn').disabled=!available;$('groupNameInput').disabled=!available;$('bulkGroupSelect').disabled=!available;$('clearRecordSelectionBtn').disabled=!available||selectedRecordIds.size===0;for(const id of Object.values(inputBySlot))$(id).disabled=!available;updateRecordGroupSelectionControls(filteredRecords());}
     function stateHasData(value){return !!(value?.records?.length||value?.groups?.length||Object.keys(value?.deletedRecords||{}).length||Object.values(value?.sources||{}).some(source=>source?.rows?.length));}
     function mergeLocalDeletionTombstones(remote,local){
-      const merged={...remote,deletedRecords:{...(remote.deletedRecords||{})}},beforeCount=(remote.records||[]).length;let changed=false;
+      const merged={...remote,deletedRecords:{...(remote.deletedRecords||{})}};let changed=false;
       for(const [id,deletedAt] of Object.entries(local.deletedRecords||{}))if(timestampValue(deletedAt)>timestampValue(merged.deletedRecords[id])){merged.deletedRecords[id]=deletedAt;changed=true;}
-      merged.records=(remote.records||[]).filter(record=>{const deletedAt=timestampValue(merged.deletedRecords[record.id]);return !deletedAt||timestampValue(record.createdAt)>deletedAt;});
-      if(merged.records.length!==beforeCount)changed=true;return {state:merged,changed};
+      const remoteRecords=remote.records||[],remoteById=new Map(remoteRecords.map(record=>[record.id,record]));
+      for(const [id,deletedAt] of Object.entries(merged.deletedRecords)){
+        const record=remoteById.get(id);
+        if(record&&Math.max(timestampValue(record.createdAt),timestampValue(record.updatedAt))>timestampValue(deletedAt)){
+          delete merged.deletedRecords[id];changed=true;
+        }
+      }
+      // Supabase es la fuente de verdad: una fila que sigue allí no se oculta
+      // ni se convierte en una eliminación pendiente por un tombstone local.
+      // Esto evita que cargar otro archivo termine borrando originales antiguos.
+      merged.records=remoteRecords;
+      return {state:merged,changed};
     }
     function initializeView(){
       for(const record of state.records){record.status=liquidationStatusValue(record.status);record.signatureRate=signatureRateValue(record.signatureRate);record.liquidationAmount=liquidationAmountValue(record.liquidationAmount);record.penaltyTotalAdjustment=penaltyTotalAdjustmentValue(record.penaltyTotalAdjustment);}hydratePenaltySourceFromRecords();const slaBackfilled=backfillMissingSla();if(slaBackfilled){persist();notify(`Se actualizaron datos de Exportación y Zonificación en ${fmtCount(slaBackfilled)} penalidades guardadas.`);}updateSourceDiag();if(state.sources.penalties)setDefaultPeriodAndPdvs();renderSummary();

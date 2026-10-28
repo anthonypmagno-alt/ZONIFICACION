@@ -1,0 +1,17 @@
+CAMBIO 2026-10-28 — RESTAURAR LIQUIDACIONES REIMPORTADAS
+
+La importación no debe eliminar registros de otras liquidaciones. Se corrigió
+la reconciliación que permitía que una marca local de eliminación ocultara una
+fila que aún existe en Supabase y la enviara a borrar durante una sincronización
+posterior. Esa ruta podía afectar a los originales y dejar visibles solo las
+simulaciones, cuyos identificadores son distintos.
+
+Las filas que Supabase todavía devuelve ahora permanecen visibles; una marca
+local no las elimina ni las oculta. Al volver a importar el mismo periodo y
+PDV, se retira la marca. Si la liquidación todavía existe, el módulo recupera
+sus guías y conserva motivos y porcentajes de decisión. No requiere SQL.
+
+Si el registro ya fue borrado físicamente de Supabase, importa de nuevo el
+Excel original para reconstruirlo. La importación recrea las guías del mismo
+periodo y PDV, pero las decisiones de exoneración anteriores solo se conservan
+si esas filas aún existen en Supabase o en un respaldo.
