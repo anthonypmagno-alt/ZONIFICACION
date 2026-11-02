@@ -101,7 +101,9 @@ function validateRoute(input,points){
   const horaSalida=String(input.horaSalida||'').trim();
   if(horaSalida&&!/^([01]\d|2[0-3]):[0-5]\d(?::[0-5]\d)?$/.test(horaSalida))throw Error('Hora de salida inválida. Usa HH:mm, entre 00:00 y 23:59.');
   const m3PorSaco=input.m3PorSaco==null||String(input.m3PorSaco).trim()===''?null:routeNumber(input.m3PorSaco,'m³ por saco',false,true);
-  return {nombre,capacidad,redondeo:input.redondeo,tramos,costo,horaSalida,m3PorSaco};
+  const tipoRuta=input.tipoRuta||'SIN_CLASIFICAR';
+  if(!['SIN_CLASIFICAR','INTERPROVINCIAL','CONEXION'].includes(tipoRuta))throw Error('Tipo de ruta inválido.');
+  return {nombre,capacidad,redondeo:input.redondeo,tramos,costo,horaSalida,m3PorSaco,tipoRuta};
 }
 function routeTotals(route){
   const m3=route.m3PorSaco==null||String(route.m3PorSaco).trim()===''?null:routeNumber(route.m3PorSaco,'m³ por saco',false,true);
