@@ -174,9 +174,16 @@ function visibleData(state, catalog, f) {
   const zones=state.zonas.filter(z=>matches(z.id,f.zonas)&&matches(z.area,f.areas)&&matches(z.tipo,f.tipos)&&matches(z.envio,f.envios));
   const restricted=['zonas','areas','tipos','envios'].some(k=>f[k]&&f[k].length);
   const ids=new Set(zones.flatMap(z=>z.distritos.map(d=>d.ubigeo)));
-  const districts=catalog.filter(c=>(!restricted||ids.has(c.ubigeo))&&matches(c.departamento,f.departamentos)&&matches(provinceKey(c.departamento,c.provincia),f.provincias)&&(!f.q||norm(c.departamento+' '+c.provincia+' '+c.distrito+' '+c.ubigeo).includes(norm(f.q))));
+  const pdvs=new Set(state.puntos.filter(p=>p.tipo==='PDV').map(p=>p.id));
+  const coverageByDistrict=new Map();
+  for(const c of state.parametros||[]){if(c.tipo!=='cobertura_pdv'||!pdvs.has(c.pdv))continue;for(const id of c.distritos){if(!coverageByDistrict.has(id))coverageByDistrict.set(id,new Set());coverageByDistrict.get(id).add(c.pdv);}}
+  const coverageRestricted=!!f.pdvs?.length||['con','sin','compartida'].includes(f.cobertura);
+  const coverageMatches=id=>{const assigned=coverageByDistrict.get(id)||new Set();return (!f.pdvs?.length||f.pdvs.some(p=>assigned.has(p)))&&(f.cobertura!=='con'||assigned.size>0)&&(f.cobertura!=='sin'||assigned.size===0)&&(f.cobertura!=='compartida'||assigned.size>1);};
+  const districts=catalog.filter(c=>coverageMatches(c.ubigeo)&&(!restricted||ids.has(c.ubigeo))&&matches(c.departamento,f.departamentos)&&matches(provinceKey(c.departamento,c.provincia),f.provincias)&&(!f.q||norm(c.departamento+' '+c.provincia+' '+c.distrito+' '+c.ubigeo).includes(norm(f.q))));
   const visible=new Set(districts.map(c=>c.ubigeo));
-  const records=state.indicadores.filter(r=>r.ubigeo?visible.has(r.ubigeo):!restricted&&matches(r.departamento.toUpperCase(),f.departamentos)&&matches(provinceKey(r.departamento,r.provincia),f.provincias)&&(!f.q||norm(r.key).includes(norm(f.q))));
+  const records=state.indicadores.filter(r=>r.ubigeo?visible.has(r.ubigeo):!coverageRestricted&&!restricted&&matches(r.departamento.toUpperCase(),f.departamentos)&&matches(provinceKey(r.departamento,r.provincia),f.provincias)&&(!f.q||norm(r.key).includes(norm(f.q))));
   const points=state.puntos.filter(p=>matches(p.tipo,f.puntoTipos)&&matches(p.area,f.areas)&&(!f.zonas?.length||p.zonas.some(z=>f.zonas.includes(z)))&&(!f.tipos?.length&&!f.envios?.length||p.zonas.some(id=>zones.some(z=>z.id===id)))&&(!f.departamentos?.length&&!f.provincias?.length&&!f.q||visible.has(p.ubigeo)));
-  return {districts,records,zones,points};
+  // Selected PDV locations remain visible even when physically outside their covered districts.
+  const filteredPoints=f.pdvs?.length?state.puntos.filter(p=>p.tipo==='PDV'&&f.pdvs.includes(p.id)&&matches(p.tipo,f.puntoTipos)):points;
+  return {districts,records,zones,points:filteredPoints};
 }
